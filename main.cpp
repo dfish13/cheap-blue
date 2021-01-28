@@ -2,10 +2,10 @@
 #include <vector>
 #include <set>
 #include <utility>
+#include <cstdint>
 
 enum Color {none, white, black, both};
 enum PType {pawn, knight, bishop, rook, queen, king, any};
-
 
 struct Piece
 {
@@ -20,19 +20,43 @@ struct Piece
 	PType ptype;
 };
 
-struct Move
+struct MoveBytes
 {
-	Move(int f, int t, bool c): from(f), to(t), capture(c) {}
 
-	bool operator<(const Move &m) const
-	{
-		if (from == m.from)
-			return to < m.to;
-		return from < m.from;
-	}
+	MoveBytes() {};
+	MoveBytes(uint8_t i, uint8_t f, uint8_t t): info(i), from(f), to(t), pad(0) {}
+	/*
+		The info byte specifies what type of move it is.
 
-	int from, to;
-	bool capture;
+		info & 128 = invalid
+		info & 64 = capture
+		info & 32 = castle
+		info & 16 = promotion
+
+		if the move is a castle,
+
+		info & 2 = castle kingside
+		info & 1 = castle queenside
+
+		if the move is a promotion,
+
+		info & 8 = queen
+		info & 4 = rook
+		info & 2 = bishop
+		info & 1 = knight
+
+	*/
+	uint8_t info;
+	uint8_t from;
+	uint8_t to;
+	uint8_t pad;
+};
+
+union Move
+{
+	Move() {};
+	MoveBytes m;
+	int x;
 };
 
 using namespace std;
@@ -126,29 +150,24 @@ class Board
 		hply = 0;
 	}
 
-	bool checkMove(int from, int to) const
+	bool checkMove(Move m) const
 	{
-		set<Move> moves = genMoves();
-		Move m = {from, to, false}, mcap = {from, to, true};
-		if (moves.find(m) != moves.end() || moves.find(mcap) != moves.end())
-			return true;
-		return false;
-	}
-
-	void makeMove(Move m)
-	{
-		squares[m.to] = squares[m.from];
-		squares[m.from] = {none, any};
-		swap(side, xside);
-		++hply;
-	}
-
-	bool makeMove(int from, int to)
-	{
-		if (checkMove(from, to))
+		set<int> moves = genMoves();
+		for (int m: moves)
 		{
-			squares[to] = squares[from];
-			squares[from] = {none, any};
+			Move move;
+			move.x = m;
+			cout << (int) move.m.from << ' ' << (int) move.m.to << '\n';
+		}
+		return moves.find(m.x) != moves.end();
+	}
+
+	bool makeMove(Move m)
+	{
+		if (checkMove(m))
+		{
+			squares[m.m.to] = squares[m.m.from];
+			squares[m.m.from] = {none, any};
 			swap(side, xside);
 			++hply;
 			return true;
@@ -156,9 +175,10 @@ class Board
 		return false;
 	}
 
-	set<Move> genMoves() const
+	set<int> genMoves() const
 	{
-		set<Move> moves;
+		set<int> moves;
+		Move move;
 
 		bool slide[6] = {false, false, true, true, true, false};
 		int offsets[6] = {0, 8, 4, 4, 8, 8};
@@ -188,10 +208,15 @@ class Board
 							if (squares[n].color != none)
 							{
 								if (squares[n].color == xside)
-									moves.insert({i, n, true});
+								{
+									// capture
+									move.m = {64, i, n};
+									moves.insert(move.x);
+								}
 								break;
 							}
-							moves.insert({i, n, false});
+							move.m = {0, i, n};
+							moves.insert(move.x);
 							if (!slide[p.ptype - pawn]) break;
 						}
 					}
@@ -201,18 +226,31 @@ class Board
 					int n, m = (side == white) ? 1 : -1;
 					if (squares[i + m * 8].color == none)
 					{
-						moves.insert({i, i + m * 8, false});
+						move.m = {0, i, i + m * 8};
+						moves.insert(move.x);
 						if (side == white && (i / 8 == 1) && squares[i + m * 16].color == none)
-							moves.insert({i, i + m * 16, false});
+						{
+							move.m = {0, i, i + m * 16};
+							moves.insert(move.x);
+						}	
 						if (side == black && (i / 8 == 6) && squares[i + m * 16].color == none)
-							moves.insert({i, i + m * 16, false});
+						{
+							move.m = {0, i, i + m * 16};
+							moves.insert(move.x);
+						}
 					}
 					n = mailbox[mailbox64[i] + m * -9];
 					if (n != -1 && squares[n].color == xside)
-						moves.insert({i, n, true});
+					{
+						move.m = {64, i, n};
+						moves.insert(move.x);
+					}
 					n = mailbox[mailbox64[i] + m * -11];
 					if (n != -1 && squares[n].color == xside)
-						moves.insert({i, n, true});	
+					{
+						move.m = {64, i, n};
+						moves.insert(move.x);
+					}	
 				}
 				
 			}
@@ -269,28 +307,71 @@ class Board
 	Color side, xside;
 	int hply;
 	int enpassant;
-	bool qcastle, kcastle;
+	int castle;
 };
 
 
-/*
-	A valid move string is something of the form e2e4, b1c3, etc.
-	Does not check if the move specified is legal.
-	If invalid move string, returns a pair where first value is -1.
-
-	Returns the indices of the square to move from and to 0-63.
-*/
-pair<int, int> parseMove(string m)
+int parseSquare(string s)
 {
-	if (m.size() == 4
-	 && (m[0] >= 97 && m[0] < 105)	// a-h
-	 && (m[1] >= 49 && m[1] < 57)	// 1-8
-	 && (m[2] >= 97 && m[2] < 105)
-	 && (m[3] >= 49 && m[3] < 57)
+	if (s.size() == 2
+		&& (s[0] >= 97 && s[0] < 105)	// a-h
+		&& (s[1] >= 49 && s[1] < 57)	// 1-8
 	)
-		return make_pair(8 * (m[1] - 49) + (m[0] - 97), 8 * (m[3] - 49) + (m[2] - 97));
+		return 8 * (s[1] - 49) + (s[0] - 97);
+	return -1;
+}
+
+
+/*
+	A valid move string is something of the form e2e4, b1xc3, etc.
+	Does not check if the move specified is legal.
+
+	castle kingside = O-O
+	castle Queenside = O-O-O
+
+	For promotion add =<Piece> where <Piece> is in {q, r, b, n}
+	e.g. h7h8=q or e7xf8=n
+*/
+int parseMove(string m)
+{
+	Move move;
+
+	int info = 0, from, to;
+	int capture = 0, promotion = 0;
+	char promoteChars[5] = "qrbn";
+	if (m == "O-O")
+		move.m = {34, 0, 0};
+	else if (m == "O-O-O")
+		move.m = {33, 0, 0};
+	else if (m.size() >= 4)
+	{
+		from = parseSquare(m.substr(0, 2));
+		if (m[2] == 'x')
+			capture = 1;
+		to = parseSquare(m.substr(2 + capture, 2));
+		if (m.size() == 6 + capture)
+		{
+			for (int i = 0; i < 4; ++i)
+				if (m[5 + capture] = promoteChars[i])
+				{
+					promotion = 1 << (3 - i);
+					break;
+				}
+		}
+		
+		if (capture)
+			info |= 64;
+		if (promotion)
+			info |= 16;
+		info |= promotion;
+		if (from >= 0 && to >= 0)
+			move.m = {info, from, to};
+		else
+			move.m = {128, 0, 0};
+	}
 	else
-		return make_pair(-1, 0);
+		move.m = {128, 0, 0};
+	return move.x;
 }
 
 
@@ -298,7 +379,7 @@ pair<int, int> parseMove(string m)
 int main()
 {
 
-	pair<int, int> move;
+	Move move;
 	string s;
 	Board board;
 	board.init();
@@ -310,18 +391,18 @@ int main()
 		while (1)
 		{
 			cin >> s;
-			move = parseMove(s);
+			move.x = parseMove(s);
 			if (s == "q")
 			{
 				cout << "Bye!\n";
 				exit(0);
 			}
-			else if (move.first == -1)
+			else if (move.m.info & 128)
 			{
 				cout << "Invalid move string. Try again: ";
 				continue;
 			}	
-			else if (!board.makeMove(move.first, move.second))
+			else if (!board.makeMove(move))
 			{
 				cout << "Illegal move. Try again: ";
 				continue;
