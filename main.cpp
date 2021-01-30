@@ -90,7 +90,7 @@ int mailbox64[64] = {
 class BitBoard
 {
 	public:
-	
+
 	static long mask(int i)
 	{
 		long m = 1;
@@ -192,7 +192,7 @@ class Board
 		};
 
 		Piece p;
-		for (int i = 0; i < 64; ++i)
+		for (uint8_t i = 0; i < 64; ++i)
 		{
 			if (squares[i].color == side)
 			{
@@ -210,12 +210,12 @@ class Board
 								if (squares[n].color == xside)
 								{
 									// capture
-									move.m = {64, i, n};
+									move.m = {64, i, static_cast<uint8_t>(n)};
 									moves.insert(move.x);
 								}
 								break;
 							}
-							move.m = {0, i, n};
+							move.m = {0, i, static_cast<uint8_t>(n)};
 							moves.insert(move.x);
 							if (!slide[p.ptype - pawn]) break;
 						}
@@ -226,33 +226,33 @@ class Board
 					int n, m = (side == white) ? 1 : -1;
 					if (squares[i + m * 8].color == none)
 					{
-						move.m = {0, i, i + m * 8};
+						move.m = {0, i, static_cast<uint8_t>(i + m * 8)};
 						moves.insert(move.x);
 						if (side == white && (i / 8 == 1) && squares[i + m * 16].color == none)
 						{
-							move.m = {0, i, i + m * 16};
+							move.m = {0, i, static_cast<uint8_t>(i + m * 16)};
 							moves.insert(move.x);
-						}	
+						}
 						if (side == black && (i / 8 == 6) && squares[i + m * 16].color == none)
 						{
-							move.m = {0, i, i + m * 16};
+							move.m = {0, i, static_cast<uint8_t>(i + m * 16)};
 							moves.insert(move.x);
 						}
 					}
 					n = mailbox[mailbox64[i] + m * -9];
 					if (n != -1 && squares[n].color == xside)
 					{
-						move.m = {64, i, n};
+						move.m = {64, i, static_cast<uint8_t>(n)};
 						moves.insert(move.x);
 					}
 					n = mailbox[mailbox64[i] + m * -11];
 					if (n != -1 && squares[n].color == xside)
 					{
-						move.m = {64, i, n};
+						move.m = {64, i, static_cast<uint8_t>(n)};
 						moves.insert(move.x);
-					}	
+					}
 				}
-				
+
 			}
 		}
 
@@ -261,7 +261,7 @@ class Board
 
 	// Returns -1 if not a valid piece
 	static int getPieceIndex(Piece p)
-	{	
+	{
 		if ((p.color == white || p.color == black) && p.ptype >= pawn && p.ptype <= king)
 			return (p.color - white) * 6 + (p.ptype - pawn);
 		return -1;
@@ -289,7 +289,7 @@ class Board
 		int i;
 		os << '\n';
 		for (int rank = 7; rank >= 0; --rank)
-		{	
+		{
 			os << rank + 1 << "  ";
 			for (int file = 0; file < 8; ++file)
 			{
@@ -336,7 +336,7 @@ int parseMove(string m)
 {
 	Move move;
 
-	int info = 0, from, to;
+	uint8_t info = 0, from, to;
 	int capture = 0, promotion = 0;
 	char promoteChars[5] = "qrbn";
 	if (m == "O-O")
@@ -352,13 +352,13 @@ int parseMove(string m)
 		if (m.size() == 6 + capture)
 		{
 			for (int i = 0; i < 4; ++i)
-				if (m[5 + capture] = promoteChars[i])
+				if (m[5 + capture] == promoteChars[i])
 				{
 					promotion = 1 << (3 - i);
 					break;
 				}
 		}
-		
+
 		if (capture)
 			info |= 64;
 		if (promotion)
@@ -401,15 +401,15 @@ int main()
 			{
 				cout << "Invalid move string. Try again: ";
 				continue;
-			}	
+			}
 			else if (!board.makeMove(move))
 			{
 				cout << "Illegal move. Try again: ";
 				continue;
 			}
-			break;	
+			break;
 		}
 	}
-	
+
 	return 0;
 }

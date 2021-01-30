@@ -13,10 +13,10 @@ $(exe): $(obj)
 	$(CC) -o $@ $^
 
 %.o: %.cpp
-	$(CC) -c $<
+	$(CC) $(FLAGS) -c $<
 
 run:
 	./$(exe)
 
 clean:
-	rm $(obj) $(exe) 
+	rm $(obj) $(exe)
