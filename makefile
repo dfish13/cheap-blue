@@ -13,7 +13,7 @@ $(exe): $(obj)
 	$(CC) -o $@ $^
 
 %.o: %.cpp
-	$(CC) -c $<
+	$(CC) -c $< $(FLAGS)
 
 run:
 	./$(exe)
