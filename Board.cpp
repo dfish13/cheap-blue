@@ -79,7 +79,7 @@
 		};
 
 		Piece p;
-		for (int i = 0; i < 64; ++i)
+		for (uint8_t i = 0; i < 64; ++i)
 		{
 			if (squares[i].color == side)
 			{
@@ -97,12 +97,12 @@
 								if (squares[n].color == xside)
 								{
 									// capture
-									move.m = {64, i, n};
+									move.m = {64, i, static_cast<uint8_t>(n)};
 									moves.insert(move.x);
 								}
 								break;
 							}
-							move.m = {0, i, n};
+							move.m = {0, i, static_cast<uint8_t>(n)};
 							moves.insert(move.x);
 							if (!slide[p.ptype - pawn]) break;
 						}
@@ -113,33 +113,33 @@
 					int n, m = (side == white) ? 1 : -1;
 					if (squares[i + m * 8].color == none)
 					{
-						move.m = {0, i, i + m * 8};
+						move.m = {0, i, static_cast<uint8_t>(i + m * 8)};
 						moves.insert(move.x);
 						if (side == white && (i / 8 == 1) && squares[i + m * 16].color == none)
 						{
-							move.m = {0, i, i + m * 16};
+							move.m = {0, i, static_cast<uint8_t>(i + m * 16)};
 							moves.insert(move.x);
-						}	
+						}
 						if (side == black && (i / 8 == 6) && squares[i + m * 16].color == none)
 						{
-							move.m = {0, i, i + m * 16};
+							move.m = {0, i, static_cast<uint8_t>(i + m * 16)};
 							moves.insert(move.x);
 						}
 					}
 					n = mailbox[mailbox64[i] + m * -9];
 					if (n != -1 && squares[n].color == xside)
 					{
-						move.m = {64, i, n};
+						move.m = {64, i, static_cast<uint8_t>(n)};
 						moves.insert(move.x);
 					}
 					n = mailbox[mailbox64[i] + m * -11];
 					if (n != -1 && squares[n].color == xside)
 					{
-						move.m = {64, i, n};
+						move.m = {64, i, static_cast<uint8_t>(n)};
 						moves.insert(move.x);
-					}	
+					}
 				}
-				
+
 			}
 		}
 
@@ -148,7 +148,7 @@
 
 	// Returns -1 if not a valid piece
 	 int Board::getPieceIndex(Piece p)
-	{	
+	{
 		if ((p.color == white || p.color == black) && p.ptype >= pawn && p.ptype <= king)
 			return (p.color - white) * 6 + (p.ptype - pawn);
 		return -1;
@@ -176,7 +176,7 @@
 		int i;
 		os << '\n';
 		for (int rank = 7; rank >= 0; --rank)
-		{	
+		{
 			os << rank + 1 << "  ";
 			for (int file = 0; file < 8; ++file)
 			{
