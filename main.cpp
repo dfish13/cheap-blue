@@ -39,7 +39,7 @@ int parseMove(string m)
 {
 	Move move;
 
-	int info = 0, from, to;
+	uint8_t info = 0, from, to;
 	int capture = 0, promotion = 0;
 	char promoteChars[5] = "qrbn";
 	if (m == "O-O")
@@ -55,13 +55,13 @@ int parseMove(string m)
 		if (m.size() == 6 + capture)
 		{
 			for (int i = 0; i < 4; ++i)
-				if (m[5 + capture] = promoteChars[i])
+				if (m[5 + capture] == promoteChars[i])
 				{
 					promotion = 1 << (3 - i);
 					break;
 				}
 		}
-		
+
 		if (capture)
 			info |= 64;
 		if (promotion)
@@ -104,15 +104,15 @@ int main()
 			{
 				cout << "Invalid move string. Try again: ";
 				continue;
-			}	
+			}
 			else if (!board.makeMove(move))
 			{
 				cout << "Illegal move. Try again: ";
 				continue;
 			}
-			break;	
+			break;
 		}
 	}
-	
+
 	return 0;
 }
