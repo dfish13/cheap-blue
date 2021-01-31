@@ -44,7 +44,6 @@
 		{
 			Move move;
 			move.x = m;
-			cout << (int) move.m.from << ' ' << (int) move.m.to << '\n';
 		}
 		return moves.find(m.x) != moves.end();
 	}

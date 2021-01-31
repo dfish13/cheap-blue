@@ -9,6 +9,7 @@
 #include <cstdint>
 
 #include "BitBoard.h"
+#include "Defs.h"
 
 
 class Board

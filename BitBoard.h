@@ -2,7 +2,7 @@
 #define BITBOARD_H 
 
 
-#include "components.h"
+#include "Defs.h"
 
 using namespace std;
 
