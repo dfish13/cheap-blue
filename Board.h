@@ -68,10 +68,23 @@ class Board
 
 	vector<BitBoard> bitBoards;
 	vector<Piece> squares;
+
+    //side has the move, xside is other.
 	Color side, xside;
+    //half move counter.
 	int hply;
+    //The value of the square that can be taken with enpassant.
 	int enpassant;
-	int castle;
+    /*
+        This is for storing the right to castle, not necessarily the possibility in the board state.
+        ex. ) Pieces still in between may result in true, but castling cannot be done.
+
+	    castle & 8 != 0 => white can long castle(O-O-O)
+	    castle & 4 != 0 => white can short castle(O-O)
+	    castle & 2 != 0 => black can long castle(O-O-O)
+	    castle & 1 != 0 => black can short castle(O-O)
+    */
+	uint8_t castleRights;
 };
 
 
