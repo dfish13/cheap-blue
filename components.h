@@ -38,6 +38,11 @@ struct MoveBytes
 	uint8_t pad;
 };
 
+/**
+ * Made to store MoveBytes. 
+ * The ability to store as an int gives the ability to store as set.
+ * 
+ */
 union Move
 {
 	Move() {};
