@@ -70,7 +70,5 @@ int main()
             cout << "Test " << testCounter << " failed (" << description << ")\n";
     }
 
-    testBoardIsAttacked();
-
     return 0;
 }

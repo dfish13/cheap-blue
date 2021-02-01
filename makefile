@@ -1,5 +1,5 @@
-src=BitBoard.cpp Board.cpp Util.cpp
 
+src=BitBoard.cpp Board.cpp Util.cpp
 
 # Transforms source file names into object file names
 obj=$(src:.cpp=.o)
@@ -15,7 +15,7 @@ all: $(EXE) $(TEST)
 $(EXE): Main.o $(obj)
 	$(CC) -o $@ $^ $(FLAGS)
 
-%.o: $(src) Main.cpp Test.cpp
+%.o: %.cpp
 	$(CC) $(FLAGS) -c $^
 
 run:

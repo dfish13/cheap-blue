@@ -53,8 +53,48 @@ bool Board::makeMove(Move m)
 {
 	if (checkMove(m))
 	{
-		squares[m.m.to] = squares[m.m.from];
-		squares[m.m.from] = {none, any};
+		int rshift = (side == white) ? 0: 56;
+		if (m.m.info & 32)
+		{
+			// castling
+			if (m.m.info & 1)
+			{
+				squares[A1 + rshift] = {none, any};
+				squares[E1 + rshift] = {none, any};
+				squares[C1 + rshift] = {side, king};
+				squares[D1 + rshift] = {side, rook};
+			}
+			else if (m.m.info & 2)
+			{
+				squares[E1 + rshift] = {none, any};
+				squares[H1 + rshift] = {none, any};
+				squares[F1 + rshift] = {side, rook};
+				squares[G1 + rshift] = {side, king};
+			}
+		}
+		else if (m.m.info & 16)
+		{
+			// pawn promotion
+			// TODO
+		}
+		else
+		{
+			uint8_t b = (side == white) ? 4: 1;
+
+			// If moving king or rook from their starting squares, lose castling rights.
+			if (m.m.from == (A1 + rshift) && squares[m.m.from].ptype == rook)
+				castleRights &= ~(b << 1);
+			else if (m.m.from == (H1 + rshift) && squares[m.m.from].ptype == rook)
+				castleRights &= ~b;
+			else if (m.m.from == (E1 + rshift) && squares[m.m.from].ptype == king)
+			{
+				castleRights &= ~(b << 1);
+				castleRights &= ~b;
+			}
+			squares[m.m.to] = squares[m.m.from];
+			squares[m.m.from] = {none, any};
+		}
+		
 		swap(side, xside);
 		++hply;
 		return true;
@@ -62,7 +102,7 @@ bool Board::makeMove(Move m)
 	return false;
 }
 
-bool Board::isAttacked(int square, Color c)
+bool Board::isAttacked(int square, Color c) const
 {
 	for (int i = 1; i < 6; ++i)
 	{
@@ -163,6 +203,32 @@ set<int> Board::genMoves() const
 
 		}
 	}
+
+	// castling moves
+	int rshift = (side == white) ? 0: 56;
+	uint8_t b = (side == white) ? 4: 1;
+	if ((castleRights & (b << 1)) &&
+		(squares[B1 + rshift].color == none) &&
+		(squares[C1 + rshift].color == none) &&
+		(squares[D1 + rshift].color == none) &&
+		!isAttacked(C1 + rshift, xside) &&
+		!isAttacked(D1 + rshift, xside) &&
+		!isAttacked(E1 + rshift, xside))
+	{
+		move.m = {33, 0, 0};
+		moves.insert(move.x);
+	}
+	if ((castleRights & b) &&
+		(squares[F1 + rshift].color == none) &&
+		(squares[G1 + rshift].color == none) &&
+		!isAttacked(E1 + rshift, xside) &&
+		!isAttacked(F1 + rshift, xside) &&
+		!isAttacked(G1 + rshift, xside))
+	{
+		move.m = {34, 0, 0};
+		moves.insert(move.x);
+	}
+
 
 	return moves;
 }
