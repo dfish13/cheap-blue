@@ -11,9 +11,8 @@ EXE=main
 TEST=test
 
 all: $(EXE) $(TEST)
-
-
-$(EXE):  Main.o $(obj)
+	
+$(EXE): Main.o $(obj)
 	$(CC) -o $@ $^ $(FLAGS)
 
 %.o: $(src) Main.cpp Test.cpp

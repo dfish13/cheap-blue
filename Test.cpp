@@ -9,6 +9,29 @@
 
 using namespace std;
 
+void testBoardIsAttacked()
+{
+    Move m;
+    Board board;
+    board.init();
+
+
+    cout << board.isAttacked(20, white) << endl;
+    cout << board.isAttacked(21, white) << endl;
+    m.x = parseMove("e2e4");
+    board.makeMove(m);
+
+    cout << board.isAttacked(35, white) << endl;
+    cout << board.isAttacked(39, white) << endl;
+    cout << board.isAttacked(40, white) << endl;
+    m.x = parseMove("b8c6");
+    board.makeMove(m);
+
+    cout << board.isAttacked(27, black) << endl;
+    cout << board.isAttacked(28, black) << endl;
+
+}
+
 int main()
 {  
 
@@ -45,8 +68,9 @@ int main()
             cout << "Test " << testCounter << " passed (" << description << ")\n";
         else
             cout << "Test " << testCounter << " failed (" << description << ")\n";
-        
     }
+
+    testBoardIsAttacked();
 
     return 0;
 }
