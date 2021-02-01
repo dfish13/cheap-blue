@@ -1,20 +1,7 @@
-#include <iostream>
+#include "Util.h"
+#include "Defs.h"
 
-#include <utility>
-#include <cstdint>
-#include "Board.h"
-
-
-
-
-using namespace std;
-
-
-
-
-
-
-int parseSquare(string s)
+int parseSquare(std::string s)
 {
 	if (s.size() == 2
 		&& (s[0] >= 97 && s[0] < 105)	// a-h
@@ -35,7 +22,7 @@ int parseSquare(string s)
 	For promotion add =<Piece> where <Piece> is in {q, r, b, n}
 	e.g. h7h8=q or e7xf8=n
 */
-int parseMove(string m)
+int parseMove(std::string m)
 {
 	Move move;
 
@@ -75,44 +62,4 @@ int parseMove(string m)
 	else
 		move.m = {128, 0, 0};
 	return move.x;
-}
-
-
-
-int main()
-{
-
-	Move move;
-	string s;
-	Board board;
-	board.init();
-
-	while (1)
-	{
-		board.display(cout);
-		cout << "Enter move or q to quit: ";
-		while (1)
-		{
-			cin >> s;
-			move.x = parseMove(s);
-			if (s == "q")
-			{
-				cout << "Bye!\n";
-				exit(0);
-			}
-			else if (move.m.info & 128)
-			{
-				cout << "Invalid move string. Try again: ";
-				continue;
-			}
-			else if (!board.makeMove(move))
-			{
-				cout << "Illegal move. Try again: ";
-				continue;
-			}
-			break;
-		}
-	}
-
-	return 0;
 }

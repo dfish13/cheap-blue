@@ -1,5 +1,5 @@
-# Collects all source files ending in .cpp
-src=$(wildcard *.cpp)
+src=BitBoard.cpp Board.cpp Util.cpp
+
 
 # Transforms source file names into object file names
 obj=$(src:.cpp=.o)
@@ -7,16 +7,26 @@ obj=$(src:.cpp=.o)
 
 CC=g++
 FLAGS=-std=c++14 -O3
-exe=main
+EXE=main
+TEST=test
 
-$(exe): $(obj)
-	$(CC) -o $@ $^
+all: $(EXE) $(TEST)
 
-%.o: %.cpp
-	$(CC) $(FLAGS) -c $<
+
+$(EXE):  Main.o $(obj)
+	$(CC) -o $@ $^ $(FLAGS)
+
+%.o: $(src) Main.cpp Test.cpp
+	$(CC) $(FLAGS) -c $^
 
 run:
-	./$(exe)
+	./$(EXE)
+
+$(TEST): Test.o $(obj)
+	$(CC) -o $@ $^ $(FLAGS)
+
+runtest:
+	./$(TEST)
 
 clean:
-	rm $(obj) $(exe)
+	rm *.o $(EXE) $(TEST)

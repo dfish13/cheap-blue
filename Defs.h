@@ -1,5 +1,5 @@
-#ifndef COMPONENTS_H
-#define COMPONENTS_H 
+#ifndef DEFS_H
+#define DEFS_H 
 
 #include <iostream>
 
