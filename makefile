@@ -16,7 +16,7 @@ all: $(EXE) $(TEST)
 $(EXE):  Main.o $(obj)
 	$(CC) -o $@ $^ $(FLAGS)
 
-%.o: $(src) Main.cpp Test.cpp
+%.o: %.cpp
 	$(CC) $(FLAGS) -c $^
 
 run:
