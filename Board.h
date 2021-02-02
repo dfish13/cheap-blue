@@ -20,13 +20,20 @@ class Board
 
 	void init();
 
-
-	bool checkMove(Move m) const;
-
 	bool makeMove(Move m);
 
 	// Returns true if square is attacked by a piece of color c.
 	bool isAttacked(int square, Color c) const;
+
+	/*
+		Because the notation for a user to input a move contains incomplete information,
+		it is necessary to match it up to a move created in the genMoves function which contains complete
+		information about the move type.
+
+		At the moment this function is coupled with the parseMove function in Util.h which is undesirable,
+		but I don't see a way around it without changing the move input notation.
+	*/
+	Move getMove(int m) const;
 
 	set<int> genMoves() const;
 
@@ -112,6 +119,9 @@ class Board
 	    castle & 1 != 0 => black can short castle(O-O)
     */
 	uint8_t castleRights;
+
+	// Number of moves made since the last irreversible move. 50 in a row means the game is a draw.
+	int fifty;
 };
 
 

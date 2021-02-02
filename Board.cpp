@@ -36,51 +36,92 @@ void Board::init()
 	xside = black;
 	hply = 0;
 	castleRights = 15;
+	fifty = 0;
 }
 
-bool Board::checkMove(Move m) const
+Move Board::getMove(int m) const
 {
+	Move move, imove;
+	imove.x = m;
 	set<int> moves = genMoves();
-	for (int m: moves)
+	if (imove.m.mtype)
 	{
-		Move move;
-		move.x = m;
+		if (moves.find(imove.x) != moves.end())
+			return imove;
+		else
+		{
+			move.m = {128, 0, 0, 0};
+			return move;
+		}
 	}
-	return moves.find(m.x) != moves.end();
+	
+	for (int x: moves)
+	{
+		move.x = x;
+		// if the from and to squares match up then we can infer this is the correct move
+		if (imove.m.from == move.m.from && imove.m.to == move.m.to)
+			return move; 
+	}
+
+	move.m = {128, 0, 0, 0};
+	return move;
 }
 
 bool Board::makeMove(Move m)
 {
-	if (checkMove(m))
+	if (!(m.m.mtype & 128))
 	{
+		// unset enpassant
+		enpassant = 0;
+
 		int rshift = (side == white) ? 0: 56;
-		if (m.m.info & 32)
+		uint8_t b = (side == white) ? 4: 1;
+
+		if (m.m.mtype & 32)
 		{
 			// castling
-			if (m.m.info & 1)
+			if (m.m.detail & 1)
 			{
 				squares[A1 + rshift] = {none, any};
 				squares[E1 + rshift] = {none, any};
 				squares[C1 + rshift] = {side, king};
 				squares[D1 + rshift] = {side, rook};
 			}
-			else if (m.m.info & 2)
+			else if (m.m.detail & 2)
 			{
 				squares[E1 + rshift] = {none, any};
 				squares[H1 + rshift] = {none, any};
 				squares[F1 + rshift] = {side, rook};
 				squares[G1 + rshift] = {side, king};
 			}
+
+			castleRights &= ~(b << 1);
+			castleRights &= ~b;
 		}
-		else if (m.m.info & 16)
+		else if (m.m.mtype & 16)
 		{
 			// pawn promotion
 			// TODO
 		}
+		else if(m.m.mtype & 8)
+		{
+			// double pawn move
+			squares[m.m.to] = squares[m.m.from];
+			squares[m.m.from] = {none, any};
+			enpassant = (m.m.to + m.m.from) / 2;
+		}
+		else if(m.m.mtype & 2)
+		{
+			// enpassant capture
+			squares[m.m.to] = squares[m.m.from];
+			squares[m.m.from] = {none, any};
+			if (side == white)
+				squares[m.m.to - 8] = {none, any};
+			else
+				squares[m.m.to + 8] = {none, any};
+		}
 		else
 		{
-			uint8_t b = (side == white) ? 4: 1;
-
 			// If moving king or rook from their starting squares, lose castling rights.
 			if (m.m.from == (A1 + rshift) && squares[m.m.from].ptype == rook)
 				castleRights &= ~(b << 1);
@@ -95,6 +136,10 @@ bool Board::makeMove(Move m)
 			squares[m.m.from] = {none, any};
 		}
 		
+		if (m.m.mtype)
+			fifty = 0;
+		else
+			++fifty;
 		swap(side, xside);
 		++hply;
 		return true;
@@ -158,12 +203,12 @@ set<int> Board::genMoves() const
 							if (squares[n].color == xside)
 							{
 								// capture
-								move.m = {64, i, static_cast<uint8_t>(n)};
+								move.m = {64, i, static_cast<uint8_t>(n), 0};
 								moves.insert(move.x);
 							}
 							break;
 						}
-						move.m = {0, i, static_cast<uint8_t>(n)};
+						move.m = {0, i, static_cast<uint8_t>(n), 0};
 						moves.insert(move.x);
 						if (!slide[p.ptype - pawn]) break;
 					}
@@ -174,29 +219,39 @@ set<int> Board::genMoves() const
 				int n, m = (side == white) ? 1 : -1;
 				if (squares[i + m * 8].color == none)
 				{
-					move.m = {0, i, static_cast<uint8_t>(i + m * 8)};
+					move.m = {4, i, static_cast<uint8_t>(i + m * 8), 0};
 					moves.insert(move.x);
 					if (side == white && (i / 8 == 1) && squares[i + m * 16].color == none)
 					{
-						move.m = {0, i, static_cast<uint8_t>(i + m * 16)};
+						move.m = {8, i, static_cast<uint8_t>(i + m * 16), 0};
 						moves.insert(move.x);
 					}
 					if (side == black && (i / 8 == 6) && squares[i + m * 16].color == none)
 					{
-						move.m = {0, i, static_cast<uint8_t>(i + m * 16)};
+						move.m = {8, i, static_cast<uint8_t>(i + m * 16), 0};
 						moves.insert(move.x);
 					}
 				}
 				n = mailbox[mailbox64[i] + m * -9];
 				if (n != -1 && squares[n].color == xside)
 				{
-					move.m = {64, i, static_cast<uint8_t>(n)};
+					move.m = {64, i, static_cast<uint8_t>(n), 0};
+					moves.insert(move.x);
+				}
+				if (n == enpassant)
+				{
+					move.m = {2, i, static_cast<uint8_t>(n), 0};
 					moves.insert(move.x);
 				}
 				n = mailbox[mailbox64[i] + m * -11];
 				if (n != -1 && squares[n].color == xside)
 				{
-					move.m = {64, i, static_cast<uint8_t>(n)};
+					move.m = {64, i, static_cast<uint8_t>(n), 0};
+					moves.insert(move.x);
+				}
+				if (n == enpassant)
+				{
+					move.m = {2, i, static_cast<uint8_t>(n), 0};
 					moves.insert(move.x);
 				}
 			}
@@ -215,7 +270,7 @@ set<int> Board::genMoves() const
 		!isAttacked(D1 + rshift, xside) &&
 		!isAttacked(E1 + rshift, xside))
 	{
-		move.m = {33, 0, 0};
+		move.m = {32, 0, 0, 1};
 		moves.insert(move.x);
 	}
 	if ((castleRights & b) &&
@@ -225,7 +280,7 @@ set<int> Board::genMoves() const
 		!isAttacked(F1 + rshift, xside) &&
 		!isAttacked(G1 + rshift, xside))
 	{
-		move.m = {34, 0, 0};
+		move.m = {32, 0, 0, 2};
 		moves.insert(move.x);
 	}
 

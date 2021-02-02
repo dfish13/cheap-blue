@@ -24,16 +24,11 @@ int main()
 		while (1)
 		{
 			cin >> s;
-			move.x = parseMove(s);
+			move = board.getMove(parseMove(s));
 			if (s == "q")
 			{
 				cout << "Bye!\n";
 				exit(0);
-			}
-			else if (move.m.info & 128)
-			{
-				cout << "Invalid move string. Try again: ";
-				continue;
 			}
 			else if (!board.makeMove(move))
 			{
