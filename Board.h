@@ -25,6 +25,9 @@ class Board
 
 	bool makeMove(Move m);
 
+	// Returns true if square is attacked by a piece of color c.
+	bool isAttacked(int square, Color c) const;
+
 	set<int> genMoves() const;
 
 	// Returns -1 if not a valid piece
@@ -66,6 +69,29 @@ class Board
 	31, 32, 33, 34, 35, 36, 37, 38,
 	21, 22, 23, 24, 25, 26, 27, 28
     };
+
+	/*
+	Used to generate moves.
+
+	Each array has 6 entries for the 6 possible pieces:
+	Pawn, Knight, Bishop, Rook, Queen, King
+
+	The slide array tells you whether a piece can move continuously in one direction.
+	i.e. the Queen can "slide" and the king cannot because it only moves one space.
+
+	offsets tells you how many directions it is possible for a piece to move.
+	offset tells you the directions a piece can move within the mailbox representation.
+	*/
+	const bool slide[6] = {false, false, true, true, true, false};
+	const int offsets[6] = {0, 8, 4, 4, 8, 8};
+	const int offset[6][8] = {
+		{   0,   0,  0,  0, 0,  0,  0,  0 },
+		{ -21, -19,-12, -8, 8, 12, 19, 21 },
+		{ -11,  -9,  9, 11, 0,  0,  0,  0 },
+		{ -10,  -1,  1, 10, 0,  0,  0,  0 },
+		{ -11, -10, -9, -1, 1,  9, 10, 11 },
+		{ -11, -10, -9, -1, 1,  9, 10, 11 }
+	};
 
 	vector<BitBoard> bitBoards;
 	vector<Piece> squares;

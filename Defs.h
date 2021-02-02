@@ -1,5 +1,23 @@
 #ifndef DEFS_H
-#define DEFS_H 
+#define DEFS_H
+
+#define A1 0
+#define B1 1
+#define C1 2
+#define D1 3
+#define E1 4
+#define F1 5
+#define G1 6
+#define H1 7
+
+#define A8 56
+#define B8 57
+#define C8 58
+#define D8 59
+#define E8 60
+#define F8 61
+#define G8 62
+#define H8 63
 
 #include <iostream>
 
