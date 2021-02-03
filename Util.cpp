@@ -1,5 +1,6 @@
 #include "Util.h"
 #include "Defs.h"
+#include <iostream>
 
 int parseSquare(std::string s)
 {
@@ -26,40 +27,37 @@ int parseMove(std::string m)
 {
 	Move move;
 
-	uint8_t info = 0, from, to;
-	int capture = 0, promotion = 0;
+	uint8_t mtype = 0, from, to, detail;
+	int promotion = 0;
 	char promoteChars[5] = "qrbn";
 	if (m == "O-O")
-		move.m = {34, 0, 0};
+		move.m = {32, 0, 0, 2};
 	else if (m == "O-O-O")
-		move.m = {33, 0, 0};
+		move.m = {32, 0, 0, 1};
 	else if (m.size() >= 4)
 	{
 		from = parseSquare(m.substr(0, 2));
-		if (m[2] == 'x')
-			capture = 1;
-		to = parseSquare(m.substr(2 + capture, 2));
-		if (m.size() == 6 + capture)
+		to = parseSquare(m.substr(2, 2));
+		if (m.size() == 6)
 		{
 			for (int i = 0; i < 4; ++i)
-				if (m[5 + capture] == promoteChars[i])
+				if (m[5] == promoteChars[i])
 				{
 					promotion = 1 << (3 - i);
 					break;
 				}
 		}
 
-		if (capture)
-			info |= 64;
 		if (promotion)
-			info |= 16;
-		info |= promotion;
+			mtype |= 16;
+		detail |= promotion;
 		if (from >= 0 && to >= 0)
-			move.m = {info, from, to};
+			move.m = {mtype, from, to, detail};
 		else
-			move.m = {128, 0, 0};
+			move.m = {128, 0, 0, 0};
 	}
 	else
-		move.m = {128, 0, 0};
+		move.m = {128, 0, 0, 0};
+
 	return move.x;
 }

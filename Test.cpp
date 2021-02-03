@@ -56,7 +56,7 @@ int main()
         iss >> description;
         while (iss >> tok)
         {
-            move.x = parseMove(tok);
+            move = board.getMove(parseMove(tok));
             if (!board.makeMove(move))
 			{
 				pass = false;
