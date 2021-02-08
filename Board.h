@@ -122,6 +122,11 @@ class Board
 
 	// Number of moves made since the last irreversible move. 50 in a row means the game is a draw.
 	int fifty;
+
+	private:
+
+	static set<int> generatePawnPromotionMoves(uint8_t from, uint8_t to);
+
 };
 
 
