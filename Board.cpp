@@ -61,7 +61,7 @@ Move Board::getMove(int m) const
 	{
 		move.x = x;
 		// if the from and to squares match up then we can infer this is the correct move
-		if (imove.m.from == move.m.from && imove.m.to == move.m.to)
+		if (imove.m.from == move.m.from && imove.m.to == move.m.to && imove.m.detail == move.m.detail)
 			return move; 
 	}
 
@@ -113,7 +113,6 @@ bool Board::makeMove(Move m)
 				else if(piece & 8)
 					promotionPiece = queen;
 				else {
-					cout << "Error no detail value for pawn promotion\n";
 					return false;
 
 				}
@@ -239,18 +238,19 @@ set<int> Board::genMoves() const
 				uint8_t singlePawnMove = static_cast<uint8_t>(i + m * 8);
 				uint8_t doublePawnMove = static_cast<uint8_t>(i + m * 16);
 				bool pawnPromotionWhite = side == white && (i / 8 == 6 );
-					bool pawnPromotionBlack = side == black && (i / 8 == 1 );
+				bool pawnPromotionBlack = side == black && (i / 8 == 1 );
 				if (squares[singlePawnMove].color == none)
 				{
-					move.m = {4, i, static_cast<uint8_t>(singlePawnMove), 0};
-					moves.insert(move.x);
-
-					
                     if(pawnPromotionWhite || pawnPromotionBlack)
                     {
 						set<int> pawnPromotionMoves = generatePawnPromotionMoves(i, singlePawnMove);
                         moves.insert(pawnPromotionMoves.begin(), pawnPromotionMoves.end());
                     }
+					else
+					{
+						move.m = {4, i, singlePawnMove, 0};
+						moves.insert(move.x);
+					}
                     
                     //double pawn for white 
 					if (side == white && (i / 8 == 1) && squares[doublePawnMove].color == none)
@@ -270,13 +270,16 @@ set<int> Board::genMoves() const
 				n = mailbox[mailbox64[i] + m * -9];
 				if (n != -1 && squares[n].color == xside)
 				{
-					move.m = {64, i, static_cast<uint8_t>(n), 0};
-					moves.insert(move.x);
                     if(pawnPromotionWhite || pawnPromotionBlack)
                     {
 						set<int> pawnPromotionMoves = generatePawnPromotionMoves(i, n);
                         moves.insert(pawnPromotionMoves.begin(), pawnPromotionMoves.end());
                     }
+					else 
+					{
+						move.m = {64, i, static_cast<uint8_t>(n), 0};
+						moves.insert(move.x);
+					}
 				}
 				if (n == enpassant)
 				{
@@ -287,13 +290,16 @@ set<int> Board::genMoves() const
 				n = mailbox[mailbox64[i] + m * -11];
 				if (n != -1 && squares[n].color == xside)
 				{
-					move.m = {64, i, static_cast<uint8_t>(n), 0};
-					moves.insert(move.x);
                     if(pawnPromotionBlack || pawnPromotionBlack)
                     {
 						set<int> pawnPromotionMoves = generatePawnPromotionMoves(i, n);
                         moves.insert(pawnPromotionMoves.begin(), pawnPromotionMoves.end());
                     }
+					else 
+					{
+						move.m = {64, i, static_cast<uint8_t>(n), 0};
+						moves.insert(move.x);
+					}
 				}
 				if (n == enpassant)
 				{
@@ -341,9 +347,9 @@ set<int> Board::generatePawnPromotionMoves(uint8_t from, uint8_t to)
 	Move promotionMove;
 	
 	//1,2,4,8 represent N,B,R,Q
-	for(uint8_t i = 1; i <=8; i*=2)
+	for(uint8_t i = 1; i <=8; i<<=1)
 	{
-		promotionMove.m = {16, from, static_cast<uint8_t>(to), i};
+		promotionMove.m = {16, from, to, i};
 		promotionMoves.insert(promotionMove.x);
 	}
 	return promotionMoves;
