@@ -1,6 +1,7 @@
 #include "Board.h"
 
 
+#include <iostream>
 void Board::init()
 {
 	bitBoards.push_back(BitBoard({white, pawn}, 0x00ff000000000000));
@@ -44,6 +45,7 @@ Move Board::getMove(int m) const
 	Move move, imove;
 	imove.x = m;
 	set<int> moves = genMoves();
+	
 	if (imove.m.mtype)
 	{
 		if (moves.find(imove.x) != moves.end())
@@ -59,7 +61,7 @@ Move Board::getMove(int m) const
 	{
 		move.x = x;
 		// if the from and to squares match up then we can infer this is the correct move
-		if (imove.m.from == move.m.from && imove.m.to == move.m.to)
+		if (imove.m.from == move.m.from && imove.m.to == move.m.to && imove.m.detail == move.m.detail)
 			return move; 
 	}
 
@@ -100,8 +102,24 @@ bool Board::makeMove(Move m)
 		}
 		else if (m.m.mtype & 16)
 		{
-			// pawn promotion
-			// TODO
+			uint8_t piece = m.m.detail;
+			PType promotionPiece;
+				if(piece & 1)
+					promotionPiece = knight;
+				else if(piece & 2)
+					promotionPiece = bishop;
+				else if(piece & 4)
+					promotionPiece = rook;
+				else if(piece & 8)
+					promotionPiece = queen;
+				else {
+					return false;
+
+				}
+			squares[m.m.to] = {side, promotionPiece};
+			squares[m.m.from] = {none, any};
+			
+            
 		}
 		else if(m.m.mtype & 8)
 		{
@@ -217,37 +235,71 @@ set<int> Board::genMoves() const
 			else // pawn moves
 			{
 				int n, m = (side == white) ? 1 : -1;
-				if (squares[i + m * 8].color == none)
+				uint8_t singlePawnMove = static_cast<uint8_t>(i + m * 8);
+				uint8_t doublePawnMove = static_cast<uint8_t>(i + m * 16);
+				bool pawnPromotionWhite = side == white && (i / 8 == 6 );
+				bool pawnPromotionBlack = side == black && (i / 8 == 1 );
+				if (squares[singlePawnMove].color == none)
 				{
-					move.m = {4, i, static_cast<uint8_t>(i + m * 8), 0};
-					moves.insert(move.x);
-					if (side == white && (i / 8 == 1) && squares[i + m * 16].color == none)
+                    if(pawnPromotionWhite || pawnPromotionBlack)
+                    {
+						set<int> pawnPromotionMoves = generatePawnPromotionMoves(i, singlePawnMove);
+                        moves.insert(pawnPromotionMoves.begin(), pawnPromotionMoves.end());
+                    }
+					else
 					{
-						move.m = {8, i, static_cast<uint8_t>(i + m * 16), 0};
+						move.m = {4, i, singlePawnMove, 0};
 						moves.insert(move.x);
 					}
-					if (side == black && (i / 8 == 6) && squares[i + m * 16].color == none)
+                    
+                    //double pawn for white 
+					if (side == white && (i / 8 == 1) && squares[doublePawnMove].color == none)
 					{
-						move.m = {8, i, static_cast<uint8_t>(i + m * 16), 0};
+						move.m = {8, i, doublePawnMove, 0};
 						moves.insert(move.x);
 					}
+                    //double pawn for black
+					if (side == black && (i / 8 == 6) && squares[doublePawnMove].color == none)
+					{
+						move.m = {8, i, doublePawnMove, 0};
+						moves.insert(move.x);
+					}
+
 				}
+				//pawn capture square
 				n = mailbox[mailbox64[i] + m * -9];
 				if (n != -1 && squares[n].color == xside)
 				{
-					move.m = {64, i, static_cast<uint8_t>(n), 0};
-					moves.insert(move.x);
+                    if(pawnPromotionWhite || pawnPromotionBlack)
+                    {
+						set<int> pawnPromotionMoves = generatePawnPromotionMoves(i, n);
+                        moves.insert(pawnPromotionMoves.begin(), pawnPromotionMoves.end());
+                    }
+					else 
+					{
+						move.m = {64, i, static_cast<uint8_t>(n), 0};
+						moves.insert(move.x);
+					}
 				}
 				if (n == enpassant)
 				{
 					move.m = {2, i, static_cast<uint8_t>(n), 0};
 					moves.insert(move.x);
 				}
+				//pawn capture square
 				n = mailbox[mailbox64[i] + m * -11];
 				if (n != -1 && squares[n].color == xside)
 				{
-					move.m = {64, i, static_cast<uint8_t>(n), 0};
-					moves.insert(move.x);
+                    if(pawnPromotionBlack || pawnPromotionBlack)
+                    {
+						set<int> pawnPromotionMoves = generatePawnPromotionMoves(i, n);
+                        moves.insert(pawnPromotionMoves.begin(), pawnPromotionMoves.end());
+                    }
+					else 
+					{
+						move.m = {64, i, static_cast<uint8_t>(n), 0};
+						moves.insert(move.x);
+					}
 				}
 				if (n == enpassant)
 				{
@@ -287,6 +339,23 @@ set<int> Board::genMoves() const
 
 	return moves;
 }
+
+set<int> Board::generatePawnPromotionMoves(uint8_t from, uint8_t to) 
+{
+
+	set<int> promotionMoves;
+	Move promotionMove;
+	
+	//1,2,4,8 represent N,B,R,Q
+	for(uint8_t i = 1; i <=8; i<<=1)
+	{
+		promotionMove.m = {16, from, to, i};
+		promotionMoves.insert(promotionMove.x);
+	}
+	return promotionMoves;
+}
+
+
 
 // Returns -1 if not a valid piece
 	int Board::getPieceIndex(Piece p)

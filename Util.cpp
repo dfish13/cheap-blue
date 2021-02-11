@@ -48,12 +48,14 @@ int parseMove(std::string m)
 				}
 		}
 
-		if (promotion)
+		if (promotion){
 			mtype |= 16;
+		}
 		detail |= promotion;
+		
 		if (from >= 0 && to >= 0)
 			move.m = {mtype, from, to, detail};
-		else
+		else 
 			move.m = {128, 0, 0, 0};
 	}
 	else
