@@ -1,0 +1,8 @@
+simple-test e2e4 e7e5 g1f3 b8c6
+pawn-promotion h2h4 g7g5 h4g5 h7h6 g5h6 f8g7 h6g7 g8h6 g7g8=q h6g8
+pawn-promotion-capture h2h4 g7g5 h4g5 h7h6 g5h6 f8g7 h6g7 g8h6 g7h8=q h6g8 h8g8
+white-castling-kingside e2e4 e7e5 g1f3 b8c6 f1c4 g8f6 O-O
+enpassant-capture e2e4 b8c6 e4e5 d7d5 e5d6 c7d6 g1f3 d6d5 a2a3 d5d4 c2c4 d4c3
+white-loses-kingside-castle-should-fail e2e4 e7e5 g1f3 b8c6 f1c4 g8f6 h1f1 f8c5 f1h1 c5b4 O-O
+pawn-promotion-with-no-piece-promotion-should-fail h2h4 g7g5 h4g5 h7h6 g5h6 f8g7 h6g7 g8h6 g7g8
+pawn-promotion-capture-no-piece-promotion-should-fail h2h4 g7g5 h4g5 h7h6 g5h6 f8g7 h6g7 g8h6 g7h8 

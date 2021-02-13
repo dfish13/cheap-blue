@@ -4,13 +4,20 @@
 
 #include "board.h"
 #include "utils/util.h"
+#include "test/test.h"
 
 
 using namespace std;
 
 
-int main()
+int main(int argc, char *argv[])
 {
+	// run tests.
+	if(argc > 1  && *argv[1] == 't')
+	{
+		cout << argv[1] << endl;
+		return Test::mainTest();
+	}
 
 	Move move;
 	string s;

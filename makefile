@@ -13,21 +13,28 @@ OBJ := $(SRC:$(SRC_DIR)/%.cpp=$(OBJ_DIR)/%.o)
 EXE        := $(BIN_DIR)/$(PROG_NAME)
 #-----
 $(info VAR="$(OBJ)")
-
+dir_guard=@mkdir -p $(@D)
 
 .PHONY: all  clean
 
 all: $(EXE)
 #incase bin directory doesn't exist
-$(EXE): $(OBJ) | $(BIN_DIR)
+$(EXE): $(OBJ) 
+	$(dir_guard)
 	$(CC) $^ -o $@
 
 #incase obj directory doesn't exist
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp | $(OBJ_DIR)
-	$(CC) $(CFLAGS) -c $< -o $@
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp 
+	$(dir_guard)
+	$(CC) $(CFLAGS) -I ./src/test -c $< -o $@
 
-run:
-	./$(PROG_NAME)
+run: $(EXE)
+	$(EXE) 
+
+test: $(EXE) 
+	$(EXE) t
+
+
 
 # $(TEST): $(TEST_OBJ) | $(OBJ)
 # 	$(CC) -o $@ $^ $(FLAGS)
@@ -38,12 +45,8 @@ run:
 # runtest: $(TEST)
 # 	./$(TEST)
 
-$(BIN_DIR) $(OBJ_DIR):
-	mkdir -p $(@D)
-
-
 
 
 clean:
-	rm -f $(BIN_DIR)/$(PROG_NAME) $(OBJ_DIR)/*.o
+	rm -f $(BIN_DIR)/$(PROG_NAME) $(OBJ_DIR)/*.o $(OBJ_DIR)/**/*.o
 
