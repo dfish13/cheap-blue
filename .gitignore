@@ -2,3 +2,5 @@
 *.o
 main
 test
+bin/
+obj/
