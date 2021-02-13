@@ -8,8 +8,8 @@
 #include <utility>
 #include <cstdint>
 
-#include "BitBoard.h"
-#include "Defs.h"
+#include "bitboard.h"
+#include "utils/defs.h"
 
 
 class Board

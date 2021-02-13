@@ -1,4 +1,4 @@
-#include "BitBoard.h"
+#include "bitboard.h"
 
 long BitBoard::mask(int i)
 {

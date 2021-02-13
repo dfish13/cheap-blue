@@ -2,8 +2,8 @@
 #include <utility>
 #include <cstdint>
 
-#include "Board.h"
-#include "Util.h"
+#include "board.h"
+#include "utils/util.h"
 
 
 using namespace std;

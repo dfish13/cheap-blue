@@ -1,5 +1,5 @@
-#include "Util.h"
-#include "Defs.h"
+#include "util.h"
+#include "defs.h"
 #include <iostream>
 
 int parseSquare(std::string s)
