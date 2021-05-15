@@ -22,6 +22,8 @@ class Board
 
 	bool makeMove(Move m);
 
+	bool takeBack();
+
 	// Returns true if square is attacked by a piece of color c.
 	bool isAttacked(int square, Color c) const;
 

@@ -358,14 +358,14 @@ set<int> Board::generatePawnPromotionMoves(uint8_t from, uint8_t to)
 
 
 // Returns -1 if not a valid piece
-	int Board::getPieceIndex(Piece p)
+int Board::getPieceIndex(Piece p)
 {
 	if ((p.color == white || p.color == black) && p.ptype >= pawn && p.ptype <= king)
 		return (p.color - white) * 6 + (p.ptype - pawn);
 	return -1;
 }
 
-	char Board::getPieceLetter(Piece p)
+char Board::getPieceLetter(Piece p)
 {
 	char pieceLetters[13] = "PNBRQKpnbrqk";
 	int i = getPieceIndex(p);
