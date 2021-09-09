@@ -4,13 +4,30 @@
 
 #include "Board.h"
 #include "Util.h"
+#include "Test.h"
 
 
 using namespace std;
 
+void test();
 
-int main()
+int main(int argc, char ** argv)
 {
+
+	// If there are any command line arguments
+	if (argc > 1)
+	{
+		string arg(argv[1]);
+		if (arg == "-t")
+			test();
+		else
+		{
+			cout << "Unrecognized command line argument\n";
+			cout << "Valid arguments are:\n\n";
+			cout << "\t-t: run tests\n\n";
+		}
+		return 0;
+	}
 
 	Move move;
 	string s;
@@ -40,4 +57,10 @@ int main()
 	}
 
 	return 0;
+}
+
+void test()
+{
+	testBoardIsAttacked();
+	testIntegration();
 }

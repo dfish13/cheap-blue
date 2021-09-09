@@ -6,8 +6,7 @@
 #include "Defs.h"
 #include "Util.h"
 #include "Board.h"
-
-using namespace std;
+#include "Test.h"
 
 void testBoardIsAttacked()
 {
@@ -32,7 +31,7 @@ void testBoardIsAttacked()
 
 }
 
-int main()
+void testIntegration()
 {  
 
     string s, tok, description;
@@ -69,6 +68,4 @@ int main()
         else
             cout << "Test " << testCounter << " failed (" << description << ")\n";
     }
-
-    return 0;
 }

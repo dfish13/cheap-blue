@@ -1,31 +1,29 @@
 
-src=BitBoard.cpp Board.cpp Util.cpp
-
-# Transforms source file names into object file names
-obj=$(src:.cpp=.o)
-
-
 CC=g++
 FLAGS=-std=c++14 -O3
 EXE=main
-TEST=test
+
+BIN=bin
+
+SRC=$(wildcard *.cpp)
+OBJ=$(patsubst %.cpp, $(BIN)/%.o, $(SRC))
 
 all: $(EXE) $(TEST)
 	
-$(EXE): Main.o $(obj)
-	$(CC) -o $@ $^ $(FLAGS)
+$(EXE): $(OBJ)
+	$(CC) -o $(BIN)/$@ $^ $(FLAGS)
 
-%.o: %.cpp
-	$(CC) $(FLAGS) -c $^
+$(BIN)/%.o: %.cpp
+	$(CC) $(FLAGS) -o $@ -c $^
 
 run:
-	./$(EXE)
-
-$(TEST): Test.o $(obj)
-	$(CC) -o $@ $^ $(FLAGS)
+	./$(BIN)/$(EXE)
 
 runtest:
-	./$(TEST)
+	./$(BIN)/$(EXE) -t
 
 clean:
-	rm *.o $(EXE) $(TEST)
+	rm $(BIN)/*.o
+
+realclean:
+	rm -rf $(BIN)
