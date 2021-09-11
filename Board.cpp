@@ -1,43 +1,11 @@
 #include "Board.h"
+#include "Util.h"
 
 
-#include <iostream>
+
 void Board::init()
 {
-	bitBoards.push_back(BitBoard({white, pawn}, 0x00ff000000000000));
-	bitBoards.push_back(BitBoard({white, knight}, 0x4200000000000000));
-	bitBoards.push_back(BitBoard({white, bishop}, 0x2400000000000000));
-	bitBoards.push_back(BitBoard({white, rook}, 0x8100000000000000));
-	bitBoards.push_back(BitBoard({white, queen}, 0x1000000000000000));
-	bitBoards.push_back(BitBoard({white, king}, 0x0800000000000000));
-	bitBoards.push_back(BitBoard({black, pawn}, 0x000000000000ff00));
-	bitBoards.push_back(BitBoard({black, knight}, 0x0000000000000042));
-	bitBoards.push_back(BitBoard({black, bishop}, 0x0000000000000024));
-	bitBoards.push_back(BitBoard({black, rook}, 0x0000000000000081));
-	bitBoards.push_back(BitBoard({black, queen}, 0x0000000000000010));
-	bitBoards.push_back(BitBoard({black, king}, 0x0000000000000008));
-
-	Piece p;
-	squares.resize(64);
-	for (int i = 0; i < 64; ++i)
-	{
-		p = {none, any};
-		for (const BitBoard & bb: bitBoards)
-		{
-			if (bb.isOccupied(i))
-			{
-				p = bb.piece;
-				break;
-			}
-		}
-		squares[i] = p;
-	}
-
-	side = white;
-	xside = black;
-	hply = 0;
-	castleRights = 15;
-	fifty = 0;
+	pos = defaultPosition();
 }
 
 Move Board::getMove(int m) const
@@ -74,31 +42,31 @@ bool Board::makeMove(Move m)
 	if (!(m.m.mtype & 128))
 	{
 		// unset enpassant
-		enpassant = 0;
+		pos.enpassant = 0;
 
-		int rshift = (side == white) ? 0: 56;
-		uint8_t b = (side == white) ? 4: 1;
+		int rshift = (pos.side == white) ? 0: 56;
+		uint8_t b = (pos.side == white) ? 4: 1;
 
 		if (m.m.mtype & 32)
 		{
 			// castling
 			if (m.m.detail & 1)
 			{
-				squares[A1 + rshift] = {none, any};
-				squares[E1 + rshift] = {none, any};
-				squares[C1 + rshift] = {side, king};
-				squares[D1 + rshift] = {side, rook};
+				pos.squares[A1 + rshift] = {none, any};
+				pos.squares[E1 + rshift] = {none, any};
+				pos.squares[C1 + rshift] = {pos.side, king};
+				pos.squares[D1 + rshift] = {pos.side, rook};
 			}
 			else if (m.m.detail & 2)
 			{
-				squares[E1 + rshift] = {none, any};
-				squares[H1 + rshift] = {none, any};
-				squares[F1 + rshift] = {side, rook};
-				squares[G1 + rshift] = {side, king};
+				pos.squares[E1 + rshift] = {none, any};
+				pos.squares[H1 + rshift] = {none, any};
+				pos.squares[F1 + rshift] = {pos.side, rook};
+				pos.squares[G1 + rshift] = {pos.side, king};
 			}
 
-			castleRights &= ~(b << 1);
-			castleRights &= ~b;
+			pos.castleRights &= ~(b << 1);
+			pos.castleRights &= ~b;
 		}
 		else if (m.m.mtype & 16)
 		{
@@ -116,50 +84,50 @@ bool Board::makeMove(Move m)
 					return false;
 
 				}
-			squares[m.m.to] = {side, promotionPiece};
-			squares[m.m.from] = {none, any};
+			pos.squares[m.m.to] = {pos.side, promotionPiece};
+			pos.squares[m.m.from] = {none, any};
 			
             
 		}
 		else if(m.m.mtype & 8)
 		{
 			// double pawn move
-			squares[m.m.to] = squares[m.m.from];
-			squares[m.m.from] = {none, any};
-			enpassant = (m.m.to + m.m.from) / 2;
+			pos.squares[m.m.to] = pos.squares[m.m.from];
+			pos.squares[m.m.from] = {none, any};
+			pos.enpassant = (m.m.to + m.m.from) / 2;
 		}
 		else if(m.m.mtype & 2)
 		{
 			// enpassant capture
-			squares[m.m.to] = squares[m.m.from];
-			squares[m.m.from] = {none, any};
-			if (side == white)
-				squares[m.m.to - 8] = {none, any};
+			pos.squares[m.m.to] = pos.squares[m.m.from];
+			pos.squares[m.m.from] = {none, any};
+			if (pos.side == white)
+				pos.squares[m.m.to - 8] = {none, any};
 			else
-				squares[m.m.to + 8] = {none, any};
+				pos.squares[m.m.to + 8] = {none, any};
 		}
 		else
 		{
 			// If moving king or rook from their starting squares, lose castling rights.
-			if (m.m.from == (A1 + rshift) && squares[m.m.from].ptype == rook)
-				castleRights &= ~(b << 1);
-			else if (m.m.from == (H1 + rshift) && squares[m.m.from].ptype == rook)
-				castleRights &= ~b;
-			else if (m.m.from == (E1 + rshift) && squares[m.m.from].ptype == king)
+			if (m.m.from == (A1 + rshift) && pos.squares[m.m.from].ptype == rook)
+				pos.castleRights &= ~(b << 1);
+			else if (m.m.from == (H1 + rshift) && pos.squares[m.m.from].ptype == rook)
+				pos.castleRights &= ~b;
+			else if (m.m.from == (E1 + rshift) && pos.squares[m.m.from].ptype == king)
 			{
-				castleRights &= ~(b << 1);
-				castleRights &= ~b;
+				pos.castleRights &= ~(b << 1);
+				pos.castleRights &= ~b;
 			}
-			squares[m.m.to] = squares[m.m.from];
-			squares[m.m.from] = {none, any};
+			pos.squares[m.m.to] = pos.squares[m.m.from];
+			pos.squares[m.m.from] = {none, any};
 		}
 		
 		if (m.m.mtype)
-			fifty = 0;
+			pos.fifty = 0;
 		else
-			++fifty;
-		swap(side, xside);
-		++hply;
+			++pos.fifty;
+		swap(pos.side, pos.xside);
+		++pos.hply;
 		return true;
 	}
 	return false;
@@ -175,9 +143,9 @@ bool Board::isAttacked(int square, Color c) const
 			{
 				n = mailbox[mailbox64[n] + offset[i][j]];
 				if (n == -1) break;
-				if (squares[n].color != none)
+				if (pos.squares[n].color != none)
 				{
-					if (squares[n].color == c && (squares[n].ptype - pawn) == i)
+					if (pos.squares[n].color == c && (pos.squares[n].ptype - pawn) == i)
 						return true;
 					break;
 				}
@@ -189,10 +157,10 @@ bool Board::isAttacked(int square, Color c) const
 	// check if is attacked by a pawn
 	int n, m = (c == white) ? 1 : -1;
 	n = mailbox[mailbox64[square] + m * 9];
-	if (n != -1 && squares[n].color == c && squares[n].ptype == pawn)
+	if (n != -1 && pos.squares[n].color == c && pos.squares[n].ptype == pawn)
 		return true;
 	n = mailbox[mailbox64[square] + m * 11];
-	if (n != -1 && squares[n].color == c && squares[n].ptype == pawn)
+	if (n != -1 && pos.squares[n].color == c && pos.squares[n].ptype == pawn)
 		return true;
 	return false;
 }
@@ -205,9 +173,9 @@ set<int> Board::genMoves() const
 	Piece p;
 	for (uint8_t i = 0; i < 64; ++i)
 	{
-		if (squares[i].color == side)
+		if (pos.squares[i].color == pos.side)
 		{
-			p = squares[i];
+			p = pos.squares[i];
 			if (p.ptype != pawn)
 			{
 				for (int j = 0; j < offsets[p.ptype - pawn]; ++j)
@@ -216,9 +184,9 @@ set<int> Board::genMoves() const
 					{
 						n = mailbox[mailbox64[n] + offset[p.ptype - pawn][j]];
 						if (n == -1) break;
-						if (squares[n].color != none)
+						if (pos.squares[n].color != none)
 						{
-							if (squares[n].color == xside)
+							if (pos.squares[n].color == pos.xside)
 							{
 								// capture
 								move.m = {64, i, static_cast<uint8_t>(n), 0};
@@ -234,12 +202,12 @@ set<int> Board::genMoves() const
 			}
 			else // pawn moves
 			{
-				int n, m = (side == white) ? 1 : -1;
+				int n, m = (pos.side == white) ? 1 : -1;
 				uint8_t singlePawnMove = static_cast<uint8_t>(i + m * 8);
 				uint8_t doublePawnMove = static_cast<uint8_t>(i + m * 16);
-				bool pawnPromotionWhite = side == white && (i / 8 == 6 );
-				bool pawnPromotionBlack = side == black && (i / 8 == 1 );
-				if (squares[singlePawnMove].color == none)
+				bool pawnPromotionWhite = pos.side == white && (i / 8 == 6 );
+				bool pawnPromotionBlack = pos.side == black && (i / 8 == 1 );
+				if (pos.squares[singlePawnMove].color == none)
 				{
                     if(pawnPromotionWhite || pawnPromotionBlack)
                     {
@@ -253,13 +221,13 @@ set<int> Board::genMoves() const
 					}
                     
                     //double pawn for white 
-					if (side == white && (i / 8 == 1) && squares[doublePawnMove].color == none)
+					if (pos.side == white && (i / 8 == 1) && pos.squares[doublePawnMove].color == none)
 					{
 						move.m = {8, i, doublePawnMove, 0};
 						moves.insert(move.x);
 					}
                     //double pawn for black
-					if (side == black && (i / 8 == 6) && squares[doublePawnMove].color == none)
+					if (pos.side == black && (i / 8 == 6) && pos.squares[doublePawnMove].color == none)
 					{
 						move.m = {8, i, doublePawnMove, 0};
 						moves.insert(move.x);
@@ -268,7 +236,7 @@ set<int> Board::genMoves() const
 				}
 				//pawn capture square
 				n = mailbox[mailbox64[i] + m * -9];
-				if (n != -1 && squares[n].color == xside)
+				if (n != -1 && pos.squares[n].color == pos.xside)
 				{
                     if(pawnPromotionWhite || pawnPromotionBlack)
                     {
@@ -281,14 +249,14 @@ set<int> Board::genMoves() const
 						moves.insert(move.x);
 					}
 				}
-				if (n == enpassant)
+				if (n == pos.enpassant)
 				{
 					move.m = {2, i, static_cast<uint8_t>(n), 0};
 					moves.insert(move.x);
 				}
 				//pawn capture square
 				n = mailbox[mailbox64[i] + m * -11];
-				if (n != -1 && squares[n].color == xside)
+				if (n != -1 && pos.squares[n].color == pos.xside)
 				{
                     if(pawnPromotionBlack || pawnPromotionBlack)
                     {
@@ -301,7 +269,7 @@ set<int> Board::genMoves() const
 						moves.insert(move.x);
 					}
 				}
-				if (n == enpassant)
+				if (n == pos.enpassant)
 				{
 					move.m = {2, i, static_cast<uint8_t>(n), 0};
 					moves.insert(move.x);
@@ -312,25 +280,25 @@ set<int> Board::genMoves() const
 	}
 
 	// castling moves
-	int rshift = (side == white) ? 0: 56;
-	uint8_t b = (side == white) ? 4: 1;
-	if ((castleRights & (b << 1)) &&
-		(squares[B1 + rshift].color == none) &&
-		(squares[C1 + rshift].color == none) &&
-		(squares[D1 + rshift].color == none) &&
-		!isAttacked(C1 + rshift, xside) &&
-		!isAttacked(D1 + rshift, xside) &&
-		!isAttacked(E1 + rshift, xside))
+	int rshift = (pos.side == white) ? 0: 56;
+	uint8_t b = (pos.side == white) ? 4: 1;
+	if ((pos.castleRights & (b << 1)) &&
+		(pos.squares[B1 + rshift].color == none) &&
+		(pos.squares[C1 + rshift].color == none) &&
+		(pos.squares[D1 + rshift].color == none) &&
+		!isAttacked(C1 + rshift, pos.xside) &&
+		!isAttacked(D1 + rshift, pos.xside) &&
+		!isAttacked(E1 + rshift, pos.xside))
 	{
 		move.m = {32, 0, 0, 1};
 		moves.insert(move.x);
 	}
-	if ((castleRights & b) &&
-		(squares[F1 + rshift].color == none) &&
-		(squares[G1 + rshift].color == none) &&
-		!isAttacked(E1 + rshift, xside) &&
-		!isAttacked(F1 + rshift, xside) &&
-		!isAttacked(G1 + rshift, xside))
+	if ((pos.castleRights & b) &&
+		(pos.squares[F1 + rshift].color == none) &&
+		(pos.squares[G1 + rshift].color == none) &&
+		!isAttacked(E1 + rshift, pos.xside) &&
+		!isAttacked(F1 + rshift, pos.xside) &&
+		!isAttacked(G1 + rshift, pos.xside))
 	{
 		move.m = {32, 0, 0, 2};
 		moves.insert(move.x);
@@ -355,25 +323,6 @@ set<int> Board::generatePawnPromotionMoves(uint8_t from, uint8_t to)
 	return promotionMoves;
 }
 
-
-
-// Returns -1 if not a valid piece
-int Board::getPieceIndex(Piece p)
-{
-	if ((p.color == white || p.color == black) && p.ptype >= pawn && p.ptype <= king)
-		return (p.color - white) * 6 + (p.ptype - pawn);
-	return -1;
-}
-
-char Board::getPieceLetter(Piece p)
-{
-	char pieceLetters[13] = "PNBRQKpnbrqk";
-	int i = getPieceIndex(p);
-	if (i == -1)
-		return '.';
-	return pieceLetters[i];
-}
-
 /*
 	Same display board function as TSCP.
 	TSCP was the first chess engine I examined so as I develop my own
@@ -383,19 +332,5 @@ char Board::getPieceLetter(Piece p)
 */
 void Board::display(ostream & os) const
 {
-	char square;
-	int i;
-	os << '\n';
-	for (int rank = 7; rank >= 0; --rank)
-	{
-		os << rank + 1 << "  ";
-		for (int file = 0; file < 8; ++file)
-		{
-			i = rank * 8 + file;
-			square = getPieceLetter(squares[i]);
-			os << square << ' ';
-		}
-		os << '\n';
-	}
-	os << "\n   a b c d e f g h\n\n";
+	printPosition(os, pos);
 }

@@ -19,14 +19,22 @@ int main(int argc, char ** argv)
 	{
 		string arg(argv[1]);
 		if (arg == "-t")
+		{
 			test();
+			return 0;
+		}
+		else if (arg == "-f" && argc > 2)
+		{
+			cout << argv[2] << '\n';
+		}
 		else
 		{
 			cout << "Unrecognized command line argument\n";
-			cout << "Valid arguments are:\n\n";
-			cout << "\t-t: run tests\n\n";
+			cout << "Valid options are:\n\n";
+			cout << "\t-t: run tests\n";
+			cout << "\t-f \"<fen>\": load FEN string\n\n";
+			return 0;
 		}
-		return 0;
 	}
 
 	Move move;

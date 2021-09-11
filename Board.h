@@ -14,7 +14,7 @@
 
 class Board
 {
-	public:
+public:
 
 	Board() {};
 
@@ -38,11 +38,6 @@ class Board
 	Move getMove(int m) const;
 
 	set<int> genMoves() const;
-
-	// Returns -1 if not a valid piece
-	static int getPieceIndex(Piece p);
-
-	static char getPieceLetter(Piece p);
 
 	/*
 		Same display board function as TSCP.
@@ -102,30 +97,9 @@ class Board
 		{ -11, -10, -9, -1, 1,  9, 10, 11 }
 	};
 
-	vector<BitBoard> bitBoards;
-	vector<Piece> squares;
+	Position pos;
 
-    //side has the move, xside is other.
-	Color side, xside;
-    //half move counter.
-	int hply;
-    //The value of the square that can be taken with enpassant.
-	int enpassant;
-    /*
-        This is for storing the right to castle, not necessarily the possibility in the board state.
-        ex. ) Pieces still in between may result in true, but castling cannot be done.
-
-	    castle & 8 != 0 => white can long castle(O-O-O)
-	    castle & 4 != 0 => white can short castle(O-O)
-	    castle & 2 != 0 => black can long castle(O-O-O)
-	    castle & 1 != 0 => black can short castle(O-O)
-    */
-	uint8_t castleRights;
-
-	// Number of moves made since the last irreversible move. 50 in a row means the game is a draw.
-	int fifty;
-
-	private:
+private:
 
 	static set<int> generatePawnPromotionMoves(uint8_t from, uint8_t to);
 

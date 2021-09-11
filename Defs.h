@@ -1,3 +1,9 @@
+/**
+ * Contains definitions for common structures and values to be used
+ * throughout Cheap Blue.
+ * 
+ */
+
 #ifndef DEFS_H
 #define DEFS_H
 
@@ -18,6 +24,8 @@
 #define F8 61
 #define G8 62
 #define H8 63
+
+#define NSQUARES 64
 
 #include <iostream>
 
@@ -71,7 +79,6 @@ union Move
 	int x;
 };
 
-
 struct Piece
 {
 	Piece()
@@ -83,6 +90,39 @@ struct Piece
 	Piece(Color c, PType p): color(c), ptype(p) {}
 	Color color;
 	PType ptype;
+};
+
+
+// Needs to be Initialized with either defaultPosition or getPositionFromFEN
+// in Util.h
+struct Position
+{
+	Position()
+	{
+
+	}
+
+	Piece squares[NSQUARES];
+	// Side has the move, xside is other.
+	Color side, xside;
+    // Half move counter.
+	int hply;
+    // The value of the square that can be taken with enpassant.
+	int enpassant;
+    /*
+        This is for storing the right to castle, not necessarily the possibility in the board state.
+        ex. ) Pieces still in between may result in true, but castling cannot be done.
+
+	    castle & 8 != 0 => white can long castle(O-O-O)
+	    castle & 4 != 0 => white can short castle(O-O)
+	    castle & 2 != 0 => black can long castle(O-O-O)
+	    castle & 1 != 0 => black can short castle(O-O)
+    */
+	uint8_t castleRights;
+
+	// Number of moves made since the last irreversible move. 50 in a row means the game is a draw.
+	int fifty;
+
 };
 
 
