@@ -14,6 +14,7 @@ void test();
 int main(int argc, char ** argv)
 {
 
+	string fen;
 	// If there are any command line arguments
 	if (argc > 1)
 	{
@@ -25,7 +26,7 @@ int main(int argc, char ** argv)
 		}
 		else if (arg == "-f" && argc > 2)
 		{
-			cout << argv[2] << '\n';
+			fen = argv[2];
 		}
 		else
 		{
@@ -40,7 +41,10 @@ int main(int argc, char ** argv)
 	Move move;
 	string s;
 	Board board;
-	board.init();
+	if (fen.empty())
+		board.init();
+	else
+		board.init(fen);
 
 	while (1)
 	{

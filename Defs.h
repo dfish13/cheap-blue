@@ -106,7 +106,7 @@ struct Position
 	// Side has the move, xside is other.
 	Color side, xside;
     // Half move counter.
-	int hply;
+	int ply;
     // The value of the square that can be taken with enpassant.
 	int enpassant;
     /*

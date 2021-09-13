@@ -19,6 +19,7 @@ public:
 	Board() {};
 
 	void init();
+	void init(std::string fen);
 
 	bool makeMove(Move m);
 

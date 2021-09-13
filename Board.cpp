@@ -8,6 +8,11 @@ void Board::init()
 	pos = defaultPosition();
 }
 
+void Board::init(std::string fen)
+{
+	pos = getPositionFromFEN(fen);
+}
+
 Move Board::getMove(int m) const
 {
 	Move move, imove;
@@ -42,6 +47,8 @@ bool Board::makeMove(Move m)
 	if (!(m.m.mtype & 128))
 	{
 		// unset enpassant
+		// Although 0 is an index for the square A1 it will never be an enpassant square
+		// so there is no problem.
 		pos.enpassant = 0;
 
 		int rshift = (pos.side == white) ? 0: 56;
@@ -127,7 +134,7 @@ bool Board::makeMove(Move m)
 		else
 			++pos.fifty;
 		swap(pos.side, pos.xside);
-		++pos.hply;
+		++pos.ply;
 		return true;
 	}
 	return false;

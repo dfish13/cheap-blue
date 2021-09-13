@@ -3,7 +3,15 @@
 #include "BitBoard.h"
 
 #include <iostream>
+#include <cctype>
 #include <list>
+
+// Converts an index which implicitly uses the top left as the starting point
+// to one that uses the bottom left.
+// For example in top left indexing the square A8 corresponds to index 0
+// and in bottom left A8 would be 56.
+// C6 is 18 in top left indexing and 42 in bottom left indexing.
+#define TOPLEFTTOBOTTOMLEFT(x) ((7 - (x / 8)) * 8 + (x % 8)) 
 
 int parseSquare(std::string s)
 {
@@ -94,17 +102,17 @@ Piece getPieceFromCharacter(char c)
 	switch (pieceIndex % 6)
 	{
 		case 0:
-			p.ptype = pawn;
+			p.ptype = pawn; break;
 		case 1:
-			p.ptype = knight;
+			p.ptype = knight; break;
 		case 2:
-			p.ptype = bishop;
+			p.ptype = bishop; break;
 		case 3:
-			p.ptype = rook;
+			p.ptype = rook; break;
 		case 4:
-			p.ptype = queen;
+			p.ptype = queen; break;
 		case 5:
-			p.ptype = king;	
+			p.ptype = king; break;
 	}
 
 	return p;
@@ -145,7 +153,7 @@ Position defaultPosition()
 
 	pos.side = white;
 	pos.xside = black;
-	pos.hply = 0;
+	pos.ply = 0;
 	pos.castleRights = 15;
 	pos.fifty = 0;
 
@@ -154,7 +162,58 @@ Position defaultPosition()
 
 Position getPositionFromFEN(std::string fen)
 {
+	Position pos;
+	Piece p;
 
+	size_t i, toplefti = 0;
+
+	for (i = 0; i < NSQUARES; ++i)
+		pos.squares[i] = {none, any};
+	
+	for (i = 0; i < fen.size() && fen[i] != ' '; ++i)
+	{
+		if (isdigit(fen[i]))
+		{
+			toplefti += (fen[i] - '0');
+		}
+		else if (fen[i] == '/')
+			continue;
+		else
+		{
+			pos.squares[TOPLEFTTOBOTTOMLEFT(toplefti)] = getPieceFromCharacter(fen[i]);
+			++toplefti;
+		}
+	}
+
+	pos.side = (fen[++i] == 'w') ? white : black;
+	pos.xside = (pos.side == white) ? black : white;
+
+	for (i += 2; i < fen.size() && fen[i] != ' '; ++i)
+	{
+		switch (fen[i])
+		{
+			case 'Q':
+				pos.castleRights |= 8; break;
+			case 'K':
+				pos.castleRights |= 4; break;
+			case 'q':
+				pos.castleRights |= 2; break;
+			case 'k':
+				pos.castleRights |= 1; break;
+		}
+
+		if (fen[++i] != '-')
+			pos.enpassant = parseSquare(fen.substr(i, 2));
+		else
+			pos.enpassant = 0;
+
+		// TODO: parse the optional fields for fifty move rule and half move counter.
+		pos.fifty = 0;
+		pos.ply = 0;
+	}
+
+
+	return pos;
 }
 
 void printPosition(std::ostream & os, Position p)
