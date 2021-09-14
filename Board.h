@@ -7,6 +7,7 @@
 #include <iostream>
 #include <utility>
 #include <cstdint>
+#include <cstdlib>
 
 #include "BitBoard.h"
 #include "Defs.h"
@@ -38,7 +39,7 @@ public:
 	*/
 	Move getMove(int m) const;
 
-	set<int> genMoves() const;
+	std::set<int> genMoves() const;
 
 	/*
 		Same display board function as TSCP.
@@ -47,7 +48,9 @@ public:
 
 		http://www.tckerrigan.com/Chess/TSCP/
 	*/
-	void display(ostream & os) const;
+	void display(std::ostream & os) const;
+
+	Move getRandomMove() const;
 
     const int mailbox[120] = {
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
@@ -102,7 +105,7 @@ public:
 
 private:
 
-	static set<int> generatePawnPromotionMoves(uint8_t from, uint8_t to);
+	static std::set<int> generatePawnPromotionMoves(uint8_t from, uint8_t to);
 
 };
 

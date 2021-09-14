@@ -15,27 +15,27 @@ void testBoardIsAttacked()
     board.init();
 
 
-    cout << board.isAttacked(20, white) << endl;
-    cout << board.isAttacked(21, white) << endl;
+    std::cout << board.isAttacked(20, white) << std::endl;
+    std::cout << board.isAttacked(21, white) << std::endl;
     m.x = parseMove("e2e4");
     board.makeMove(m);
 
-    cout << board.isAttacked(35, white) << endl;
-    cout << board.isAttacked(39, white) << endl;
-    cout << board.isAttacked(40, white) << endl;
+    std::cout << board.isAttacked(35, white) << std::endl;
+    std::cout << board.isAttacked(39, white) << std::endl;
+    std::cout << board.isAttacked(40, white) << std::endl;
     m.x = parseMove("b8c6");
     board.makeMove(m);
 
-    cout << board.isAttacked(27, black) << endl;
-    cout << board.isAttacked(28, black) << endl;
+    std::cout << board.isAttacked(27, black) << std::endl;
+    std::cout << board.isAttacked(28, black) << std::endl;
 
 }
 
 void testIntegration()
 {  
 
-    string s, tok, description;
-    ifstream fin;
+    std::string s, tok, description;
+    std::ifstream fin;
     fin.open("tests");
 
     int testCounter = 0;
@@ -50,7 +50,7 @@ void testIntegration()
         pass = true;
         board.init();
         ++testCounter;
-        istringstream iss(s);
+        std::istringstream iss(s);
         
         iss >> description;
         while (iss >> tok)
@@ -64,8 +64,16 @@ void testIntegration()
         }
 
         if (pass)
-            cout << "Test " << testCounter << " passed (" << description << ")\n";
+            std::cout << "Test " << testCounter << " passed (" << description << ")\n";
         else
-            cout << "Test " << testCounter << " failed (" << description << ")\n";
+            std::cout << "Test " << testCounter << " failed (" << description << ")\n";
     }
+}
+
+void testFENParser()
+{
+    Position p;
+    std::string fen("rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq e3 1 2");
+    getPositionFromFEN(p, fen);
+    printPosition(std::cout, p);
 }

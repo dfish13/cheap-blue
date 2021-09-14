@@ -10,6 +10,8 @@ int parseSquare(std::string s);
 int parseMove(std::string m);
 int parseFEN(std::string f);
 
+std::string indexToSquare(int i);
+
 // Returns a Piece object given a character in the set "PNBRQKpnbrqk"
 char getCharacterFromPiece(Piece p);
 Piece getPieceFromCharacter(char c);
@@ -17,8 +19,11 @@ Piece getPieceFromCharacter(char c);
 
 // Two ways to initialize a Position object
 Position defaultPosition();
-Position getPositionFromFEN(std::string fen);
+int getPositionFromFEN(Position & pos, std::string fen);    // Returns -1 if invalid FEN string
 
-void printPosition(std::ostream & os, Position p);
+void printBoard(std::ostream & os, const Position & p);
+
+// Print values in a Position object. For testing/debugging.
+void printPosition(std::ostream & os, const Position & p);
 
 #endif

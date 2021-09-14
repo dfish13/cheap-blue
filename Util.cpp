@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <cctype>
+#include <sstream>
 #include <list>
 
 // Converts an index which implicitly uses the top left as the starting point
@@ -73,6 +74,15 @@ int parseMove(std::string m)
 		move.m = {128, 0, 0, 0};
 
 	return move.x;
+}
+
+std::string indexToSquare(int i)
+{
+	char s[3] = "a1";
+	s[0] = (i % 8) + 'a';
+	s[1] = (i / 8) + '1';
+
+	return s;
 }
 
 // Used for converting chars to Piece objects and vice versa
@@ -160,11 +170,9 @@ Position defaultPosition()
 	return pos;
 }
 
-Position getPositionFromFEN(std::string fen)
+int getPositionFromFEN(Position & pos, std::string fen)
 {
-	Position pos;
 	Piece p;
-
 	size_t i, toplefti = 0;
 
 	for (i = 0; i < NSQUARES; ++i)
@@ -173,9 +181,7 @@ Position getPositionFromFEN(std::string fen)
 	for (i = 0; i < fen.size() && fen[i] != ' '; ++i)
 	{
 		if (isdigit(fen[i]))
-		{
 			toplefti += (fen[i] - '0');
-		}
 		else if (fen[i] == '/')
 			continue;
 		else
@@ -185,7 +191,12 @@ Position getPositionFromFEN(std::string fen)
 		}
 	}
 
-	pos.side = (fen[++i] == 'w') ? white : black;
+	if (fen[++i] == 'w')
+		pos.side = white;
+	else if (fen[i] == 'b')
+		pos.side = black;
+	else
+		return -1;
 	pos.xside = (pos.side == white) ? black : white;
 
 	for (i += 2; i < fen.size() && fen[i] != ' '; ++i)
@@ -201,22 +212,25 @@ Position getPositionFromFEN(std::string fen)
 			case 'k':
 				pos.castleRights |= 1; break;
 		}
-
-		if (fen[++i] != '-')
-			pos.enpassant = parseSquare(fen.substr(i, 2));
-		else
-			pos.enpassant = 0;
-
-		// TODO: parse the optional fields for fifty move rule and half move counter.
-		pos.fifty = 0;
-		pos.ply = 0;
 	}
 
+	if (fen[++i] != '-')
+	{
+		pos.enpassant = parseSquare(fen.substr(i, 2));
+		if (pos.enpassant < 0)
+			return -1;
+	}
+	else
+		pos.enpassant = 0;
 
-	return pos;
+	i += 2;
+	std::istringstream iss(fen.substr(i));
+	iss >> pos.fifty >> pos.ply;
+
+	return 0;
 }
 
-void printPosition(std::ostream & os, Position p)
+void printBoard(std::ostream & os, const Position & p)
 {
 	int i;
 	os << '\n';
@@ -231,4 +245,33 @@ void printPosition(std::ostream & os, Position p)
 		os << '\n';
 	}
 	os << "\n   a b c d e f g h\n\n";
+}
+
+void printPosition(std::ostream & os, const Position & p)
+{
+	std::string s;
+
+	printBoard(os, p);
+	if (p.side == white)
+		s = "white\n";
+	else if (p.side == black)
+		s = "black\n";
+	else
+		s = "invalid\n";
+	os << "side = " << s;
+	os << "enpassant = " << indexToSquare(p.enpassant) << '\n';
+	os << "ply = " << p.ply << '\n';
+	os << "fifty = " << p.fifty << '\n';
+
+	s.clear();
+	if (p.castleRights | 8)
+		s.push_back('Q');
+	if (p.castleRights | 4)
+		s.push_back('K');
+	if (p.castleRights | 2)
+		s.push_back('q');
+	if (p.castleRights | 1)
+		s.push_back('k'); 
+	
+	os << "castleRights = " << s << '\n';
 }

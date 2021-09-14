@@ -69,7 +69,7 @@ struct MoveBytes
 
 /**
  * Made to store MoveBytes. 
- * The ability to store as an int gives the ability to store as set.
+ * Unioning with int allows you to store moves in a set.
  * 
  */
 union Move

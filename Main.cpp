@@ -1,6 +1,8 @@
 #include <iostream>
 #include <utility>
 #include <cstdint>
+#include <cstdlib>
+#include <ctime>
 
 #include "Board.h"
 #include "Util.h"
@@ -15,6 +17,8 @@ int main(int argc, char ** argv)
 {
 
 	string fen;
+	Board board;
+	Move move;
 	// If there are any command line arguments
 	if (argc > 1)
 	{
@@ -24,9 +28,14 @@ int main(int argc, char ** argv)
 			test();
 			return 0;
 		}
-		else if (arg == "-f" && argc > 2)
+		else if (arg == "-f")
 		{
-			fen = argv[2];
+			// For now, just pick a random move from the set of possible moves.
+			getline(cin, fen);
+			board.init(fen);
+			move = board.getRandomMove();
+			cout << indexToSquare(move.m.from) << indexToSquare(move.m.to);
+			return 0;
 		}
 		else
 		{
@@ -38,13 +47,8 @@ int main(int argc, char ** argv)
 		}
 	}
 
-	Move move;
 	string s;
-	Board board;
-	if (fen.empty())
-		board.init();
-	else
-		board.init(fen);
+	board.init();
 
 	while (1)
 	{
@@ -75,4 +79,5 @@ void test()
 {
 	testBoardIsAttacked();
 	testIntegration();
+	testFENParser();
 }

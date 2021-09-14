@@ -2,7 +2,6 @@
 #include "Util.h"
 
 
-
 void Board::init()
 {
 	pos = defaultPosition();
@@ -10,14 +9,15 @@ void Board::init()
 
 void Board::init(std::string fen)
 {
-	pos = getPositionFromFEN(fen);
+	if (getPositionFromFEN(pos, fen) < 0)
+		pos = defaultPosition();
 }
 
 Move Board::getMove(int m) const
 {
 	Move move, imove;
 	imove.x = m;
-	set<int> moves = genMoves();
+	std::set<int> moves = genMoves();
 	
 	if (imove.m.mtype)
 	{
@@ -133,7 +133,7 @@ bool Board::makeMove(Move m)
 			pos.fifty = 0;
 		else
 			++pos.fifty;
-		swap(pos.side, pos.xside);
+		std::swap(pos.side, pos.xside);
 		++pos.ply;
 		return true;
 	}
@@ -172,9 +172,9 @@ bool Board::isAttacked(int square, Color c) const
 	return false;
 }
 
-set<int> Board::genMoves() const
+std::set<int> Board::genMoves() const
 {
-	set<int> moves;
+	std::set<int> moves;
 	Move move;
 
 	Piece p;
@@ -218,7 +218,7 @@ set<int> Board::genMoves() const
 				{
                     if(pawnPromotionWhite || pawnPromotionBlack)
                     {
-						set<int> pawnPromotionMoves = generatePawnPromotionMoves(i, singlePawnMove);
+						std::set<int> pawnPromotionMoves = generatePawnPromotionMoves(i, singlePawnMove);
                         moves.insert(pawnPromotionMoves.begin(), pawnPromotionMoves.end());
                     }
 					else
@@ -247,7 +247,7 @@ set<int> Board::genMoves() const
 				{
                     if(pawnPromotionWhite || pawnPromotionBlack)
                     {
-						set<int> pawnPromotionMoves = generatePawnPromotionMoves(i, n);
+						std::set<int> pawnPromotionMoves = generatePawnPromotionMoves(i, n);
                         moves.insert(pawnPromotionMoves.begin(), pawnPromotionMoves.end());
                     }
 					else 
@@ -267,7 +267,7 @@ set<int> Board::genMoves() const
 				{
                     if(pawnPromotionBlack || pawnPromotionBlack)
                     {
-						set<int> pawnPromotionMoves = generatePawnPromotionMoves(i, n);
+						std::set<int> pawnPromotionMoves = generatePawnPromotionMoves(i, n);
                         moves.insert(pawnPromotionMoves.begin(), pawnPromotionMoves.end());
                     }
 					else 
@@ -315,10 +315,10 @@ set<int> Board::genMoves() const
 	return moves;
 }
 
-set<int> Board::generatePawnPromotionMoves(uint8_t from, uint8_t to) 
+std::set<int> Board::generatePawnPromotionMoves(uint8_t from, uint8_t to) 
 {
 
-	set<int> promotionMoves;
+	std::set<int> promotionMoves;
 	Move promotionMove;
 	
 	//1,2,4,8 represent N,B,R,Q
@@ -337,7 +337,18 @@ set<int> Board::generatePawnPromotionMoves(uint8_t from, uint8_t to)
 
 	http://www.tckerrigan.com/Chess/TSCP/
 */
-void Board::display(ostream & os) const
+void Board::display(std::ostream & os) const
 {
-	printPosition(os, pos);
+	printBoard(os, pos);
+}
+
+Move Board::getRandomMove() const
+{
+	Move m;
+	std::set<int> moveSet = genMoves();
+	std::vector<int> moves(moveSet.begin(), moveSet.end());
+
+	srand(time(NULL));
+	m.x = moves[rand() % moves.size()];
+	return m;
 }

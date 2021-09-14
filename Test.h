@@ -3,5 +3,6 @@
 
 void testBoardIsAttacked();
 void testIntegration();
+void testFENParser();
 
 #endif

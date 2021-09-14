@@ -4,8 +4,6 @@
 
 #include "Defs.h"
 
-using namespace std;
-
 class BitBoard
 {
 	public:
