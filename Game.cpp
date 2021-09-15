@@ -1,25 +1,39 @@
-#include "Board.h"
+#include "Game.h"
 #include "Util.h"
 
 
-void Board::init()
+void Game::init()
 {
 	pos = defaultPosition();
+	movestack.reserve(MOVE_STACK);
+	history.reserve(HIST_STACK);
 }
 
-void Board::init(std::string fen)
+void Game::init(std::string fen)
 {
-	if (getPositionFromFEN(pos, fen) < 0)
+	if (!getPositionFromFEN(pos, fen))
 		pos = defaultPosition();
+	movestack.reserve(MOVE_STACK);
+	history.reserve(HIST_STACK);
 }
 
-Move Board::getMove(int m) const
+Move Game::getMove(int m) const
 {
 	Move move, imove;
 	imove.x = m;
 	std::set<int> moves = genMoves();
 	
-	if (imove.m.mtype)
+	if (imove.m.mtype & 32)
+	{
+		for (int x: moves)
+		{
+			move.x = x;
+			if (move.m.mtype & 32 && move.m.detail == imove.m.detail)
+				return move;
+		}
+	}
+
+	if (imove.m.mtype)  
 	{
 		if (moves.find(imove.x) != moves.end())
 			return imove;
@@ -42,105 +56,188 @@ Move Board::getMove(int m) const
 	return move;
 }
 
-bool Board::makeMove(Move m)
+bool Game::makeMove(Move m)
 {
-	if (!(m.m.mtype & 128))
+	if (m.m.mtype & 128)
+		return false;
+	
+	History h;
+	h.m = m;
+	h.capture = pos.squares[m.m.to].ptype;
+	h.castleRights = pos.castleRights;
+	h.ep = pos.enpassant;
+	h.fifty = pos.fifty;
+	h.hash = pos.hash;
+	history.push_back(h);
+
+	// unset enpassant
+	// Although 0 is an index for the square A1 it will never be an enpassant square
+	// so there is no problem.
+	pos.enpassant = 0;
+
+	int rshift = (pos.side == white) ? 0: 56;
+	uint8_t b = (pos.side == white) ? 4: 1;
+
+	if (m.m.mtype & 32)
 	{
-		// unset enpassant
-		// Although 0 is an index for the square A1 it will never be an enpassant square
-		// so there is no problem.
-		pos.enpassant = 0;
-
-		int rshift = (pos.side == white) ? 0: 56;
-		uint8_t b = (pos.side == white) ? 4: 1;
-
-		if (m.m.mtype & 32)
+		// castling
+		if (m.m.detail & 1)
 		{
-			// castling
-			if (m.m.detail & 1)
-			{
-				pos.squares[A1 + rshift] = {none, any};
-				pos.squares[E1 + rshift] = {none, any};
-				pos.squares[C1 + rshift] = {pos.side, king};
-				pos.squares[D1 + rshift] = {pos.side, rook};
-			}
-			else if (m.m.detail & 2)
-			{
-				pos.squares[E1 + rshift] = {none, any};
-				pos.squares[H1 + rshift] = {none, any};
-				pos.squares[F1 + rshift] = {pos.side, rook};
-				pos.squares[G1 + rshift] = {pos.side, king};
-			}
+			pos.squares[A1 + rshift] = {none, any};
+			pos.squares[E1 + rshift] = {none, any};
+			pos.squares[C1 + rshift] = {pos.side, king};
+			pos.squares[D1 + rshift] = {pos.side, rook};
+		}
+		else if (m.m.detail & 2)
+		{
+			pos.squares[E1 + rshift] = {none, any};
+			pos.squares[H1 + rshift] = {none, any};
+			pos.squares[F1 + rshift] = {pos.side, rook};
+			pos.squares[G1 + rshift] = {pos.side, king};
+		}
 
+		pos.castleRights &= ~(b << 1);
+		pos.castleRights &= ~b;
+	}
+	else if (m.m.mtype & 16)
+	{
+		uint8_t piece = m.m.detail;
+		PType promotionPiece;
+			if(piece & 1)
+				promotionPiece = knight;
+			else if(piece & 2)
+				promotionPiece = bishop;
+			else if(piece & 4)
+				promotionPiece = rook;
+			else if(piece & 8)
+				promotionPiece = queen;
+			else {
+				return false;
+
+			}
+		pos.squares[m.m.to] = {pos.side, promotionPiece};
+		pos.squares[m.m.from] = {none, any};
+		
+		
+	}
+	else if(m.m.mtype & 8)
+	{
+		// double pawn move
+		pos.squares[m.m.to] = pos.squares[m.m.from];
+		pos.squares[m.m.from] = {none, any};
+		pos.enpassant = (m.m.to + m.m.from) / 2;
+	}
+	else if(m.m.mtype & 2)
+	{
+		// enpassant capture
+		pos.squares[m.m.to] = pos.squares[m.m.from];
+		pos.squares[m.m.from] = {none, any};
+		if (pos.side == white)
+			pos.squares[m.m.to - 8] = {none, any};
+		else
+			pos.squares[m.m.to + 8] = {none, any};
+	}
+	else
+	{
+		// If moving king or rook from their starting squares, lose castling rights.
+		if (m.m.from == (A1 + rshift) && pos.squares[m.m.from].ptype == rook)
+			pos.castleRights &= ~(b << 1);
+		else if (m.m.from == (H1 + rshift) && pos.squares[m.m.from].ptype == rook)
+			pos.castleRights &= ~b;
+		else if (m.m.from == (E1 + rshift) && pos.squares[m.m.from].ptype == king)
+		{
 			pos.castleRights &= ~(b << 1);
 			pos.castleRights &= ~b;
 		}
-		else if (m.m.mtype & 16)
-		{
-			uint8_t piece = m.m.detail;
-			PType promotionPiece;
-				if(piece & 1)
-					promotionPiece = knight;
-				else if(piece & 2)
-					promotionPiece = bishop;
-				else if(piece & 4)
-					promotionPiece = rook;
-				else if(piece & 8)
-					promotionPiece = queen;
-				else {
-					return false;
-
-				}
-			pos.squares[m.m.to] = {pos.side, promotionPiece};
-			pos.squares[m.m.from] = {none, any};
-			
-            
-		}
-		else if(m.m.mtype & 8)
-		{
-			// double pawn move
-			pos.squares[m.m.to] = pos.squares[m.m.from];
-			pos.squares[m.m.from] = {none, any};
-			pos.enpassant = (m.m.to + m.m.from) / 2;
-		}
-		else if(m.m.mtype & 2)
-		{
-			// enpassant capture
-			pos.squares[m.m.to] = pos.squares[m.m.from];
-			pos.squares[m.m.from] = {none, any};
-			if (pos.side == white)
-				pos.squares[m.m.to - 8] = {none, any};
-			else
-				pos.squares[m.m.to + 8] = {none, any};
-		}
-		else
-		{
-			// If moving king or rook from their starting squares, lose castling rights.
-			if (m.m.from == (A1 + rshift) && pos.squares[m.m.from].ptype == rook)
-				pos.castleRights &= ~(b << 1);
-			else if (m.m.from == (H1 + rshift) && pos.squares[m.m.from].ptype == rook)
-				pos.castleRights &= ~b;
-			else if (m.m.from == (E1 + rshift) && pos.squares[m.m.from].ptype == king)
-			{
-				pos.castleRights &= ~(b << 1);
-				pos.castleRights &= ~b;
-			}
-			pos.squares[m.m.to] = pos.squares[m.m.from];
-			pos.squares[m.m.from] = {none, any};
-		}
-		
-		if (m.m.mtype)
-			pos.fifty = 0;
-		else
-			++pos.fifty;
-		std::swap(pos.side, pos.xside);
-		++pos.ply;
-		return true;
+		pos.squares[m.m.to] = pos.squares[m.m.from];
+		pos.squares[m.m.from] = {none, any};
 	}
-	return false;
+	
+	if (m.m.mtype)
+		pos.fifty = 0;
+	else
+		++pos.fifty;
+	std::swap(pos.side, pos.xside);
+	++pos.ply;
+
+	if (inCheck(pos.xside))
+	{
+		takeBack();
+		return false;
+	}
+	setHash();
+
+	return true;
 }
 
-bool Board::isAttacked(int square, Color c) const
+bool Game::takeBack()
+{
+	if (history.empty())
+		return false;
+	History h = history[history.size() - 1];
+	Move m;
+
+	std::swap(pos.side, pos.xside);
+	--pos.ply;
+	history.pop_back();
+	m = h.m;
+	pos.castleRights = h.castleRights;
+	pos.enpassant = h.ep;
+	pos.fifty = h.fifty;
+	pos.hash = h.hash;
+	pos.squares[m.m.from].color = pos.side;
+	
+	if (m.m.mtype & 16) // Pawn promotion so change back to pawn.
+		pos.squares[m.m.from].ptype = pawn;
+	else
+		pos.squares[m.m.from].ptype = pos.squares[m.m.to].ptype;
+	
+	if (h.capture == any) // Restore captured piece.
+		pos.squares[m.m.to] = {none, any};
+	else
+		pos.squares[m.m.to] = {pos.xside, h.capture};
+	
+	if (m.m.mtype & 32) // Restore rook for a castling move.
+	{
+		int from, to;
+		switch (m.m.to)
+		{
+			case G1:
+				from = F1;
+				to = H1;
+				break;
+			case C1:
+				from = D1;
+				to = A1;
+				break;
+			case G8:
+				from = F8;
+				to = H8;
+				break;
+			case C8:
+				from = D8;
+				to = A8;
+				break;
+			default:
+				from = to = 0;
+				break;
+		}
+		pos.squares[to] = {pos.side, rook};
+		pos.squares[from] = {none, any};
+	}
+
+	if (m.m.mtype & 2) // Enpassant capture.
+	{
+		if (pos.side = white)
+			pos.squares[m.m.to - 8] = {pos.xside, pawn};
+		else
+			pos.squares[m.m.to + 8] = {pos.xside, pawn};
+	}
+
+	return true;
+}
+
+bool Game::isAttacked(int square, Color c) const
 {
 	for (int i = 1; i < 6; ++i)
 	{
@@ -172,7 +269,18 @@ bool Board::isAttacked(int square, Color c) const
 	return false;
 }
 
-std::set<int> Board::genMoves() const
+bool Game::inCheck(Color c) const
+{
+	for (int i = 0; i < NSQUARES; ++i)
+	{
+		if (pos.squares[i].color == c && pos.squares[i].ptype == king)
+			return isAttacked(i, (c == white) ? black : white);
+	}
+	// Should not reach here, because that means there is no king
+	return true;
+}
+
+std::set<int> Game::genMoves() const
 {
 	std::set<int> moves;
 	Move move;
@@ -287,8 +395,10 @@ std::set<int> Board::genMoves() const
 	}
 
 	// castling moves
-	int rshift = (pos.side == white) ? 0: 56;
+	uint8_t rshift = (pos.side == white) ? 0: 56;
 	uint8_t b = (pos.side == white) ? 4: 1;
+
+	// Queenside (long) castle
 	if ((pos.castleRights & (b << 1)) &&
 		(pos.squares[B1 + rshift].color == none) &&
 		(pos.squares[C1 + rshift].color == none) &&
@@ -297,9 +407,11 @@ std::set<int> Board::genMoves() const
 		!isAttacked(D1 + rshift, pos.xside) &&
 		!isAttacked(E1 + rshift, pos.xside))
 	{
-		move.m = {32, 0, 0, 1};
+		move.m = {32, static_cast<uint8_t>(E1 + rshift), static_cast<uint8_t>(C1 + rshift), 1};
 		moves.insert(move.x);
 	}
+
+	// Kingside (short) castle.
 	if ((pos.castleRights & b) &&
 		(pos.squares[F1 + rshift].color == none) &&
 		(pos.squares[G1 + rshift].color == none) &&
@@ -307,17 +419,33 @@ std::set<int> Board::genMoves() const
 		!isAttacked(F1 + rshift, pos.xside) &&
 		!isAttacked(G1 + rshift, pos.xside))
 	{
-		move.m = {32, 0, 0, 2};
+		move.m = {32, static_cast<uint8_t>(E1 + rshift), static_cast<uint8_t>(G1 + rshift), 2};
 		moves.insert(move.x);
 	}
-
-
 	return moves;
 }
 
-std::set<int> Board::generatePawnPromotionMoves(uint8_t from, uint8_t to) 
+std::vector<int> Game::genLegalMoves()
 {
+	std::vector<int> legalmoves;
+	std::set<int> moves = genMoves();
+	Move m;
 
+	legalmoves.reserve(moves.size());
+	for (int x: moves)
+	{
+		m.x = x;
+		if (makeMove(m))
+		{
+			legalmoves.push_back(m.x);
+			takeBack();
+		}	
+	}
+	return legalmoves;
+}
+
+std::set<int> Game::generatePawnPromotionMoves(uint8_t from, uint8_t to) 
+{
 	std::set<int> promotionMoves;
 	Move promotionMove;
 	
@@ -330,6 +458,11 @@ std::set<int> Board::generatePawnPromotionMoves(uint8_t from, uint8_t to)
 	return promotionMoves;
 }
 
+void Game::setHash()
+{
+	pos.hash = 0;
+}
+
 /*
 	Same display board function as TSCP.
 	TSCP was the first chess engine I examined so as I develop my own
@@ -337,18 +470,21 @@ std::set<int> Board::generatePawnPromotionMoves(uint8_t from, uint8_t to)
 
 	http://www.tckerrigan.com/Chess/TSCP/
 */
-void Board::display(std::ostream & os) const
+void Game::display(std::ostream & os) const
 {
 	printBoard(os, pos);
 }
 
-Move Board::getRandomMove() const
+Move Game::getRandomMove()
 {
 	Move m;
-	std::set<int> moveSet = genMoves();
-	std::vector<int> moves(moveSet.begin(), moveSet.end());
-
-	srand(time(NULL));
-	m.x = moves[rand() % moves.size()];
+	std::vector<int> moves = genLegalMoves();
+	if (moves.empty())
+		m.m = {128, 0, 0, 0};
+	else
+	{
+		srand(time(NULL));
+		m.x = moves[rand() % moves.size()];
+	}
 	return m;
 }

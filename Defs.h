@@ -108,7 +108,7 @@ struct Position
     // Half move counter.
 	int ply;
     // The value of the square that can be taken with enpassant.
-	int enpassant;
+	uint8_t enpassant;
     /*
         This is for storing the right to castle, not necessarily the possibility in the board state.
         ex. ) Pieces still in between may result in true, but castling cannot be done.
@@ -123,6 +123,22 @@ struct Position
 	// Number of moves made since the last irreversible move. 50 in a row means the game is a draw.
 	int fifty;
 
+	// Zobrist hash of the position
+	int hash;
+
+};
+
+/*
+	Contains information that allows you to take a move back.
+*/
+struct History
+{
+	Move m;
+	PType capture;
+	uint8_t castleRights;
+	int ep;
+	int fifty;
+	int hash;
 };
 
 

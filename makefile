@@ -7,6 +7,7 @@ DBG=debug
 BIN=bin
 
 SRC=$(wildcard *.cpp)
+HDRS=$(wildcard *.h)
 OBJ=$(patsubst %.cpp, $(BIN)/%.o, $(SRC))
 DBGOBJ=$(patsubst %.cpp, $(DBG)/%.o, $(SRC))
 

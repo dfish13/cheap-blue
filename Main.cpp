@@ -4,7 +4,7 @@
 #include <cstdlib>
 #include <ctime>
 
-#include "Board.h"
+#include "Game.h"
 #include "Util.h"
 #include "Test.h"
 
@@ -17,7 +17,7 @@ int main(int argc, char ** argv)
 {
 
 	string fen;
-	Board board;
+	Game game;
 	Move move;
 	// If there are any command line arguments
 	if (argc > 1)
@@ -28,13 +28,13 @@ int main(int argc, char ** argv)
 			test();
 			return 0;
 		}
-		else if (arg == "-f")
+		else if (arg == "-f" && argc > 2)
 		{
 			// For now, just pick a random move from the set of possible moves.
-			getline(cin, fen);
-			board.init(fen);
-			move = board.getRandomMove();
-			cout << indexToSquare(move.m.from) << indexToSquare(move.m.to);
+			fen = argv[2];
+			game.init(fen);
+			move = game.getRandomMove();
+			cout << getMoveString(move);
 			return 0;
 		}
 		else
@@ -48,22 +48,30 @@ int main(int argc, char ** argv)
 	}
 
 	string s;
-	board.init();
+	game.init();
 
 	while (1)
 	{
-		board.display(cout);
-		cout << "Enter move or q to quit: ";
+		game.display(cout);
+		cout << "Enter move, b to take back move, or q to quit: ";
 		while (1)
 		{
 			cin >> s;
-			move = board.getMove(parseMove(s));
+			move = game.getMove(parseMove(s));
 			if (s == "q")
 			{
 				cout << "Bye!\n";
 				exit(0);
 			}
-			else if (!board.makeMove(move))
+			else if (s == "b")
+			{
+				if (!game.takeBack())
+				{
+					cout << "Unable to take back move. Try something else: ";
+					continue;
+				}
+			}
+			else if (!game.makeMove(move))
 			{
 				cout << "Illegal move. Try again: ";
 				continue;
@@ -80,4 +88,5 @@ void test()
 	testBoardIsAttacked();
 	testIntegration();
 	testFENParser();
+	testInCheck();
 }

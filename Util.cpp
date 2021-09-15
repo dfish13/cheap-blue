@@ -85,6 +85,28 @@ std::string indexToSquare(int i)
 	return s;
 }
 
+std::string getMoveString(Move m)
+{
+	std::string s = indexToSquare(m.m.from) + indexToSquare(m.m.to);
+
+	if (m.m.mtype & 128)
+		return "None";
+	
+	if (m.m.mtype & 16)
+	{
+		s.push_back('=');
+		if (m.m.detail | 8)
+			s.push_back('q');
+		else if (m.m.detail | 4)
+			s.push_back('r');
+		else if (m.m.detail | 2)
+			s.push_back('b');
+		else if (m.m.detail | 1)
+			s.push_back('n');
+	}
+	return s;
+}
+
 // Used for converting chars to Piece objects and vice versa
 char pieceLetters[14] = "PNBRQKpnbrqk.";
 
@@ -170,7 +192,7 @@ Position defaultPosition()
 	return pos;
 }
 
-int getPositionFromFEN(Position & pos, std::string fen)
+bool getPositionFromFEN(Position & pos, std::string fen)
 {
 	Piece p;
 	size_t i, toplefti = 0;
@@ -196,7 +218,7 @@ int getPositionFromFEN(Position & pos, std::string fen)
 	else if (fen[i] == 'b')
 		pos.side = black;
 	else
-		return -1;
+		return false;
 	pos.xside = (pos.side == white) ? black : white;
 
 	for (i += 2; i < fen.size() && fen[i] != ' '; ++i)
@@ -218,7 +240,7 @@ int getPositionFromFEN(Position & pos, std::string fen)
 	{
 		pos.enpassant = parseSquare(fen.substr(i, 2));
 		if (pos.enpassant < 0)
-			return -1;
+			return false;
 	}
 	else
 		pos.enpassant = 0;
@@ -227,7 +249,7 @@ int getPositionFromFEN(Position & pos, std::string fen)
 	std::istringstream iss(fen.substr(i));
 	iss >> pos.fifty >> pos.ply;
 
-	return 0;
+	return true;
 }
 
 void printBoard(std::ostream & os, const Position & p)
