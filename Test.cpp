@@ -2,11 +2,47 @@
 #include <sstream>
 #include <fstream>
 #include <string>
+#include <vector>
 
 #include "Defs.h"
 #include "Util.h"
 #include "Game.h"
 #include "Test.h"
+
+
+/**
+ * All of these positions and perft values were found at:
+ * https://www.chessprogramming.org/Perft_Results
+ * 
+ * WARNING!! This test make take a while to run.
+ */
+void testPerft()
+{
+    std::vector<PerftTest> perftTests = {
+        {"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", 5, 4865609},
+        {"r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -", 4, 4085603},
+        {"8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - -", 6, 11030083},
+        {"r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1", 4, 422333},
+        {"r2q1rk1/pP1p2pp/Q4n2/bbp1p3/Np6/1B3NBn/pPPP1PPP/R3K2R b KQ - 0 1", 4, 422333}
+    };
+
+    Game game;
+    game.init();
+    long nodes;
+    int testN = 1;
+
+    for (PerftTest p: perftTests)
+    {
+        game.load(p.fen);
+        nodes = game.Perft(p.depth);
+        if (nodes != p.nodes)
+            std::cout << "Perft test " << testN << " failed :(\n";
+        else
+            std::cout << "Perft test " << testN << " passed!\n";
+        ++testN;
+    }
+
+}
 
 void testBoardIsAttacked()
 {
@@ -14,21 +50,30 @@ void testBoardIsAttacked()
     Game game;
     game.init();
 
+    bool flag = false;
 
-    std::cout << game.isAttacked(20, white) << std::endl;
-    std::cout << game.isAttacked(21, white) << std::endl;
+    if (!game.isAttacked(20, white))
+        flag = true;
+    if (!game.isAttacked(21, white))
+        flag = true;
     m.x = parseMove("e2e4");
     game.makeMove(m);
 
-    std::cout << game.isAttacked(35, white) << std::endl;
-    std::cout << game.isAttacked(39, white) << std::endl;
-    std::cout << game.isAttacked(40, white) << std::endl;
+    if (!game.isAttacked(35, white))
+        flag = true;
+    if (!game.isAttacked(39, white))
+        flag = true;
+    if (!game.isAttacked(40, white))
+        flag = true;
     m.x = parseMove("b8c6");
     game.makeMove(m);
 
-    std::cout << game.isAttacked(27, black) << std::endl;
-    std::cout << game.isAttacked(28, black) << std::endl;
+    if (!game.isAttacked(27, black))
+        flag = true;
+    if (game.isAttacked(28, black))
+        flag = true;
 
+    std::cout << "testBoardIsAttacked() " << ((flag) ? "failed :(\n" : "passed!\n");
 }
 
 void testIntegration()
@@ -75,7 +120,6 @@ void testFENParser()
     Position p;
     std::string fen("rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq e3 1 2");
     getPositionFromFEN(p, fen);
-    printPosition(std::cout, p);
 }
 
 void testInCheck()

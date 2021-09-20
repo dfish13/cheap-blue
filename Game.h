@@ -64,6 +64,17 @@ const int offset[6][8] = {
 	{ -11, -10, -9, -1, 1,  9, 10, 11 }
 };
 
+const int castle_mask[64] = {
+	 7, 15, 15, 15,  3, 15, 15, 11,
+	15, 15, 15, 15, 15, 15, 15, 15,
+	15, 15, 15, 15, 15, 15, 15, 15,
+	15, 15, 15, 15, 15, 15, 15, 15,
+	15, 15, 15, 15, 15, 15, 15, 15,
+	15, 15, 15, 15, 15, 15, 15, 15,
+	15, 15, 15, 15, 15, 15, 15, 15,
+	13, 15, 15, 15, 12, 15, 15, 14
+};
+
 
 class Game
 {
@@ -73,6 +84,9 @@ public:
 
 	void init();
 	void init(std::string fen);
+
+	// Similar to init(fen) but you can use it on a game that has already been initialized.
+	void load(std::string fen);
 
 	bool makeMove(Move m);
 
@@ -113,6 +127,7 @@ public:
 	void display(std::ostream & os) const;
 
 	Move getRandomMove();
+	long Perft(int depth);
 
 	Position pos;
 	int first_move[MAX_PLY];
@@ -121,7 +136,9 @@ public:
 
 private:
 
-	static std::set<int> generatePawnPromotionMoves(uint8_t from, uint8_t to);
+	// Fills array promotionMoves with the 4 possible pawn promotions
+	// promotionMoves should already have memory allocated.
+	static void generatePawnPromotionMoves(uint8_t from, uint8_t to, int * promotionMoves);
 
 };
 

@@ -17,6 +17,17 @@ void Game::init(std::string fen)
 	history.reserve(HIST_STACK);
 }
 
+void Game::load(std::string fen)
+{
+	Position p;
+	if (getPositionFromFEN(p, fen))
+	{
+		pos = p;
+		movestack.clear();
+		history.clear();
+	}
+}
+
 Move Game::getMove(int m) const
 {
 	Move move, imove;
@@ -71,9 +82,7 @@ bool Game::makeMove(Move m)
 	history.push_back(h);
 
 	// unset enpassant
-	// Although 0 is an index for the square A1 it will never be an enpassant square
-	// so there is no problem.
-	pos.enpassant = 0;
+	pos.enpassant = NSQUARES;
 
 	int rshift = (pos.side == white) ? 0: 56;
 	uint8_t b = (pos.side == white) ? 4: 1;
@@ -95,9 +104,6 @@ bool Game::makeMove(Move m)
 			pos.squares[F1 + rshift] = {pos.side, rook};
 			pos.squares[G1 + rshift] = {pos.side, king};
 		}
-
-		pos.castleRights &= ~(b << 1);
-		pos.castleRights &= ~b;
 	}
 	else if (m.m.mtype & 16)
 	{
@@ -139,19 +145,11 @@ bool Game::makeMove(Move m)
 	}
 	else
 	{
-		// If moving king or rook from their starting squares, lose castling rights.
-		if (m.m.from == (A1 + rshift) && pos.squares[m.m.from].ptype == rook)
-			pos.castleRights &= ~(b << 1);
-		else if (m.m.from == (H1 + rshift) && pos.squares[m.m.from].ptype == rook)
-			pos.castleRights &= ~b;
-		else if (m.m.from == (E1 + rshift) && pos.squares[m.m.from].ptype == king)
-		{
-			pos.castleRights &= ~(b << 1);
-			pos.castleRights &= ~b;
-		}
 		pos.squares[m.m.to] = pos.squares[m.m.from];
 		pos.squares[m.m.from] = {none, any};
 	}
+
+	pos.castleRights &= castle_mask[m.m.to] & castle_mask[m.m.from]; 
 	
 	if (m.m.mtype)
 		pos.fifty = 0;
@@ -228,7 +226,12 @@ bool Game::takeBack()
 
 	if (m.m.mtype & 2) // Enpassant capture.
 	{
+		/*
+			Just to document an awful bug which caused me much
+			pain and suffering, the following line used to be:
 		if (pos.side = white)
+		*/
+		if (pos.side == white)
 			pos.squares[m.m.to - 8] = {pos.xside, pawn};
 		else
 			pos.squares[m.m.to + 8] = {pos.xside, pawn};
@@ -284,6 +287,7 @@ std::set<int> Game::genMoves() const
 {
 	std::set<int> moves;
 	Move move;
+	int promotionMoves[4];
 
 	Piece p;
 	for (uint8_t i = 0; i < 64; ++i)
@@ -326,8 +330,9 @@ std::set<int> Game::genMoves() const
 				{
                     if(pawnPromotionWhite || pawnPromotionBlack)
                     {
-						std::set<int> pawnPromotionMoves = generatePawnPromotionMoves(i, singlePawnMove);
-                        moves.insert(pawnPromotionMoves.begin(), pawnPromotionMoves.end());
+						generatePawnPromotionMoves(i, singlePawnMove, promotionMoves);
+						for (int i = 0; i < 4; ++i)
+                        	moves.insert(promotionMoves[i]);
                     }
 					else
 					{
@@ -355,8 +360,9 @@ std::set<int> Game::genMoves() const
 				{
                     if(pawnPromotionWhite || pawnPromotionBlack)
                     {
-						std::set<int> pawnPromotionMoves = generatePawnPromotionMoves(i, n);
-                        moves.insert(pawnPromotionMoves.begin(), pawnPromotionMoves.end());
+						generatePawnPromotionMoves(i, n, promotionMoves);
+						for (int i = 0; i < 4; ++i)
+							moves.insert(promotionMoves[i]);
                     }
 					else 
 					{
@@ -369,14 +375,15 @@ std::set<int> Game::genMoves() const
 					move.m = {2, i, static_cast<uint8_t>(n), 0};
 					moves.insert(move.x);
 				}
-				//pawn capture square
+				// pawn capture square
 				n = mailbox[mailbox64[i] + m * -11];
 				if (n != -1 && pos.squares[n].color == pos.xside)
 				{
-                    if(pawnPromotionBlack || pawnPromotionBlack)
+                    if(pawnPromotionWhite || pawnPromotionBlack)
                     {
-						std::set<int> pawnPromotionMoves = generatePawnPromotionMoves(i, n);
-                        moves.insert(pawnPromotionMoves.begin(), pawnPromotionMoves.end());
+						generatePawnPromotionMoves(i, n, promotionMoves);
+                        for (int i = 0; i < 4; ++i)
+							moves.insert(promotionMoves[i]);
                     }
 					else 
 					{
@@ -444,18 +451,16 @@ std::vector<int> Game::genLegalMoves()
 	return legalmoves;
 }
 
-std::set<int> Game::generatePawnPromotionMoves(uint8_t from, uint8_t to) 
+void Game::generatePawnPromotionMoves(uint8_t from, uint8_t to, int * promotionMoves) 
 {
-	std::set<int> promotionMoves;
 	Move promotionMove;
-	
-	//1,2,4,8 represent N,B,R,Q
+	int j = 0;
+	// 1,2,4,8 represent N,B,R,Q
 	for(uint8_t i = 1; i <=8; i<<=1)
 	{
 		promotionMove.m = {16, from, to, i};
-		promotionMoves.insert(promotionMove.x);
+		promotionMoves[j++] = promotionMove.x;
 	}
-	return promotionMoves;
 }
 
 void Game::setHash()
@@ -487,4 +492,25 @@ Move Game::getRandomMove()
 		m.x = moves[rand() % moves.size()];
 	}
 	return m;
+}
+
+long Game::Perft(int depth)
+{
+	if (depth == 0)
+		return 1;
+	long nodes = 0;
+	Move m;
+
+	std::set<int> moves = genMoves();
+	for (int x: moves)
+	{
+		m.x = x;
+		if (makeMove(m))
+		{
+			nodes += Perft(depth - 1);
+			takeBack();
+		}
+	}
+	return nodes;
+
 }

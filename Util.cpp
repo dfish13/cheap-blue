@@ -78,6 +78,8 @@ int parseMove(std::string m)
 
 std::string indexToSquare(int i)
 {
+	if ( i < 0 || i >= NSQUARES)
+		return "-";
 	char s[3] = "a1";
 	s[0] = (i % 8) + 'a';
 	s[1] = (i / 8) + '1';
@@ -87,6 +89,10 @@ std::string indexToSquare(int i)
 
 std::string getMoveString(Move m)
 {
+
+	if (m.m.mtype & 32)
+		return (m.m.detail & 2) ? "O-O" : "O-O-O";
+
 	std::string s = indexToSquare(m.m.from) + indexToSquare(m.m.to);
 
 	if (m.m.mtype & 128)
@@ -95,13 +101,13 @@ std::string getMoveString(Move m)
 	if (m.m.mtype & 16)
 	{
 		s.push_back('=');
-		if (m.m.detail | 8)
+		if (m.m.detail & 8)
 			s.push_back('q');
-		else if (m.m.detail | 4)
+		else if (m.m.detail & 4)
 			s.push_back('r');
-		else if (m.m.detail | 2)
+		else if (m.m.detail & 2)
 			s.push_back('b');
-		else if (m.m.detail | 1)
+		else if (m.m.detail & 1)
 			s.push_back('n');
 	}
 	return s;
@@ -220,7 +226,8 @@ bool getPositionFromFEN(Position & pos, std::string fen)
 	else
 		return false;
 	pos.xside = (pos.side == white) ? black : white;
-
+	pos.castleRights = 0;
+	
 	for (i += 2; i < fen.size() && fen[i] != ' '; ++i)
 	{
 		switch (fen[i])
@@ -233,6 +240,8 @@ bool getPositionFromFEN(Position & pos, std::string fen)
 				pos.castleRights |= 2; break;
 			case 'k':
 				pos.castleRights |= 1; break;
+			default:
+				break;
 		}
 	}
 
@@ -243,11 +252,16 @@ bool getPositionFromFEN(Position & pos, std::string fen)
 			return false;
 	}
 	else
-		pos.enpassant = 0;
+		pos.enpassant = NSQUARES;
 
 	i += 2;
-	std::istringstream iss(fen.substr(i));
-	iss >> pos.fifty >> pos.ply;
+	if (i < fen.size())
+	{
+		std::istringstream iss(fen.substr(i));
+		iss >> pos.fifty >> pos.ply;
+	}
+	else
+		pos.fifty = pos.ply = 0;
 
 	return true;
 }
@@ -286,14 +300,14 @@ void printPosition(std::ostream & os, const Position & p)
 	os << "fifty = " << p.fifty << '\n';
 
 	s.clear();
-	if (p.castleRights | 8)
+	if (p.castleRights & 8)
 		s.push_back('Q');
-	if (p.castleRights | 4)
+	if (p.castleRights & 4)
 		s.push_back('K');
-	if (p.castleRights | 2)
+	if (p.castleRights & 2)
 		s.push_back('q');
-	if (p.castleRights | 1)
+	if (p.castleRights & 1)
 		s.push_back('k'); 
 	
-	os << "castleRights = " << s << '\n';
+	os << "castleRights = " << ((s.empty()) ? "-" : s) << '\n';
 }
