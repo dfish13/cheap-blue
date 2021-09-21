@@ -129,6 +129,9 @@ public:
 	Move getRandomMove();
 	long Perft(int depth);
 
+	// Get static evaluation. Positive values mean white is better
+	double Eval();
+
 	Position pos;
 	int first_move[MAX_PLY];
 	std::vector<Move> movestack;

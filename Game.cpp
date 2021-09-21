@@ -1,5 +1,6 @@
 #include "Game.h"
 #include "Util.h"
+#include "Eval.h"
 
 
 void Game::init()
@@ -324,8 +325,8 @@ std::set<int> Game::genMoves() const
 				int n, m = (pos.side == white) ? 1 : -1;
 				uint8_t singlePawnMove = static_cast<uint8_t>(i + m * 8);
 				uint8_t doublePawnMove = static_cast<uint8_t>(i + m * 16);
-				bool pawnPromotionWhite = pos.side == white && (i / 8 == 6 );
-				bool pawnPromotionBlack = pos.side == black && (i / 8 == 1 );
+				bool pawnPromotionWhite = pos.side == white && (ROW(i) == 6 );
+				bool pawnPromotionBlack = pos.side == black && (ROW(i) == 1 );
 				if (pos.squares[singlePawnMove].color == none)
 				{
                     if(pawnPromotionWhite || pawnPromotionBlack)
@@ -341,13 +342,13 @@ std::set<int> Game::genMoves() const
 					}
                     
                     //double pawn for white 
-					if (pos.side == white && (i / 8 == 1) && pos.squares[doublePawnMove].color == none)
+					if (pos.side == white && (ROW(i) == 1) && pos.squares[doublePawnMove].color == none)
 					{
 						move.m = {8, i, doublePawnMove, 0};
 						moves.insert(move.x);
 					}
                     //double pawn for black
-					if (pos.side == black && (i / 8 == 6) && pos.squares[doublePawnMove].color == none)
+					if (pos.side == black && (ROW(i) == 6) && pos.squares[doublePawnMove].color == none)
 					{
 						move.m = {8, i, doublePawnMove, 0};
 						moves.insert(move.x);
@@ -513,4 +514,12 @@ long Game::Perft(int depth)
 	}
 	return nodes;
 
+}
+
+double Game::Eval()
+{
+	double score;
+	score = (double) eval(pos);
+	score /= 100.0;
+	return (pos.side == white) ? score : -score;
 }

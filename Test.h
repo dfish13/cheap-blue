@@ -8,6 +8,8 @@ struct PerftTest
     long nodes;
 };
 
+
+void testEval();
 void testPerft();
 void testBoardIsAttacked();
 void testIntegration();

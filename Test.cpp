@@ -8,7 +8,19 @@
 #include "Util.h"
 #include "Game.h"
 #include "Test.h"
+#include "Eval.h"
 
+
+void testEval()
+{
+    Game game;
+    game.init();
+
+    if (eval(game.pos) == 0)
+        std::cout << "testEval() passed!\n";
+    else
+        std::cout << "testEval() failed :(\n";
+}
 
 /**
  * All of these positions and perft values were found at:

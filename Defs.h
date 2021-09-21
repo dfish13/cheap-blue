@@ -27,9 +27,12 @@
 
 #define NSQUARES 64
 
+#define ROW(x)	(x >> 3)
+#define COL(x)	(x & 7)
+
 #include <iostream>
 
-enum Color {none, white, black, both};
+enum Color {white, black, none, both};
 enum PType {pawn, knight, bishop, rook, queen, king, any};
 
 struct MoveBytes

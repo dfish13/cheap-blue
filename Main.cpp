@@ -116,6 +116,10 @@ int main(int argc, char ** argv)
 		{
 			printPosition(cout, game.pos);
 		}
+		else if (s == "e")
+		{
+			cout << "static evaluation = " << game.Eval() << '\n';
+		}
 		else
 		{
 			if (move.m.mtype & 128)
@@ -134,6 +138,7 @@ int main(int argc, char ** argv)
 
 void test()
 {
+	testEval();
 	testPerft();
 	testBoardIsAttacked();
 	testIntegration();
@@ -168,6 +173,7 @@ void menu()
 	cout << "\tb to take a move back\n";
 	cout << "\tp to run perft test\n";
 	cout << "\ti to print info on current position\n";
+	cout << "\te to print static evaluation\n";
 	cout << "\td to display board\n";
 	cout << "\tq to quit\n";
 }
