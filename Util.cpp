@@ -2,17 +2,12 @@
 #include "Defs.h"
 #include "BitBoard.h"
 
-#include <iostream>
-#include <cctype>
-#include <sstream>
-#include <list>
-
 // Converts an index which implicitly uses the top left as the starting point
 // to one that uses the bottom left.
 // For example in top left indexing the square A8 corresponds to index 0
 // and in bottom left A8 would be 56.
 // C6 is 18 in top left indexing and 42 in bottom left indexing.
-#define TOPLEFTTOBOTTOMLEFT(x) ((7 - (x / 8)) * 8 + (x % 8)) 
+#define TOPLEFTTOBOTTOMLEFT(x) ((7 - ROW(x)) * 8 + COL(x)) 
 
 int parseSquare(std::string s)
 {
@@ -194,6 +189,7 @@ Position defaultPosition()
 	pos.ply = 0;
 	pos.castleRights = 15;
 	pos.fifty = 0;
+	pos.enpassant = NSQUARES;
 
 	return pos;
 }
@@ -310,4 +306,27 @@ void printPosition(std::ostream & os, const Position & p)
 		s.push_back('k'); 
 	
 	os << "castleRights = " << ((s.empty()) ? "-" : s) << '\n';
+}
+
+bool checkPosition(const Position & p, std::ostream & os)
+{
+    for (int i = 0; i < NSQUARES; ++i)
+    {
+		if (p.squares[i].color == white && i >= 48)
+		{
+			os << i << '\n';
+			return false;
+		}
+			
+		if (p.squares[i].color == black && i < 16)
+		{
+			os << i << '\n';
+			return false;
+		}
+        if (p.squares[i].ptype < pawn || p.squares[i].ptype > any)
+            return false;
+        if (p.squares[i].color < white || p.squares[i].color > none)
+            return false;
+    }
+	return true;
 }

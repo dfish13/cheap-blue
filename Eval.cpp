@@ -1,5 +1,7 @@
 #include "Eval.h"
 
+namespace Eval {
+
 /* the values of the pieces */
 const int piece_value[6] = {
 	100, 300, 300, 500, 900, 0
@@ -91,7 +93,7 @@ int pawn_mat[2];  /* the value of a side's pawns */
 
 Position pos;
 
-int eval(const Position & p)
+int eval(Position p)
 {
 
     // Copy p into global position to avoid passing position as an argument multiple times.
@@ -381,3 +383,6 @@ int eval_bkp(int f)
 
 	return r;
 }
+
+} // namespace Eval
+

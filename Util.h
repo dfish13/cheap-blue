@@ -3,8 +3,9 @@
 
 #include "Defs.h"
 
-#include <string>
-#include <ostream>
+#include <iostream>
+#include <sstream>
+#include <list>
 
 int parseSquare(std::string s);
 int parseMove(std::string m);
@@ -26,5 +27,7 @@ void printBoard(std::ostream & os, const Position & p);
 
 // Print values in a Position object. For testing/debugging.
 void printPosition(std::ostream & os, const Position & p);
+
+bool checkPosition(const Position & p, std::ostream & os);
 
 #endif

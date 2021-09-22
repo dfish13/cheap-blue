@@ -30,7 +30,7 @@
 #define ROW(x)	(x >> 3)
 #define COL(x)	(x & 7)
 
-#include <iostream>
+#include <cstdint>
 
 enum Color {white, black, none, both};
 enum PType {pawn, knight, bishop, rook, queen, king, any};
@@ -70,14 +70,11 @@ struct MoveBytes
 	uint8_t detail;
 };
 
-/**
- * Made to store MoveBytes. 
- * Unioning with int allows you to store moves in a set.
- * 
- */
+// Unioned with int so that you can easily convert between the two types. 
 union Move
 {
 	Move() {};
+	Move(int x) : x(x) {};
 	MoveBytes m;
 	int x;
 };
@@ -88,6 +85,11 @@ struct Piece
 	{
 		color = none;
 		ptype = any;
+	}
+
+	bool operator==(Piece p)
+	{
+		return color == p.color && ptype == p.ptype;
 	}
 
 	Piece(Color c, PType p): color(c), ptype(p) {}
@@ -131,10 +133,8 @@ struct Position
 
 };
 
-/*
-	Contains information that allows you to take a move back.
-*/
-struct History
+// Contains information that allows you to take a move back.
+struct MoveInfo
 {
 	Move m;
 	PType capture;

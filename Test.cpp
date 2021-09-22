@@ -16,7 +16,7 @@ void testEval()
     Game game;
     game.init();
 
-    if (eval(game.pos) == 0)
+    if (Eval::eval(game.pos) == 0)
         std::cout << "testEval() passed!\n";
     else
         std::cout << "testEval() failed :(\n";
@@ -48,9 +48,10 @@ void testPerft()
         game.load(p.fen);
         nodes = game.Perft(p.depth);
         if (nodes != p.nodes)
-            std::cout << "Perft test " << testN << " failed :(\n";
+            std::cout << "Perft test " << testN << " failed :( ";
         else
-            std::cout << "Perft test " << testN << " passed!\n";
+            std::cout << "Perft test " << testN << " passed! ";
+        std::cout << nodes << ' ' << p.nodes << '\n';
         ++testN;
     }
 

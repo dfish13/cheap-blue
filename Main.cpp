@@ -7,7 +7,7 @@
 #include "Game.h"
 #include "Util.h"
 #include "Test.h"
-
+#include "Engine.h"
 
 using namespace std;
 
@@ -41,7 +41,9 @@ int main(int argc, char ** argv)
 			// For now, just pick a random move from the set of possible moves.
 			fen = argv[2];
 			game.init(fen);
-			move = game.getRandomMove();
+			Engine engine(&game);
+			engine.think(2000);
+			move = engine.move();
 			cout << getMoveString(move);
 			return 0;
 		}
@@ -74,12 +76,13 @@ int main(int argc, char ** argv)
 	else
 		game.init(fen);
 
+	Engine engine(&game, &cout);
+
 	cout << "Type m to print menu\n";
 	while (1)
 	{
 		cout << "> ";
 		cin >> s;
-		move.x = parseMove(s);
 		if (s == "q")
 		{
 			cout << "Bye!\n";
@@ -118,10 +121,17 @@ int main(int argc, char ** argv)
 		}
 		else if (s == "e")
 		{
-			cout << "static evaluation = " << game.Eval() << '\n';
+			cout << "static evaluation = " << game.Evaluation() << '\n';
+		}
+		else if (s == "c")
+		{
+			engine.think(2000);
+			move = engine.move();
+			cout << getMoveString(move) << '\n';
 		}
 		else
 		{
+			move.x = parseMove(s);
 			if (move.m.mtype & 128)
 			{
 				cout << "Invalid command or move string. Try again.\n";
@@ -150,7 +160,9 @@ void perft(Game & game, int depth)
 {
 	Move move;
 	cout << "Perft " << depth << '\n';
-	set<int> moves = game.genMoves();
+	vector<int> moves;
+	moves.reserve(40);
+	game.genMoves(moves);
 	long nodes, totalNodes = 0;
 	for (int x: moves)
 	{
@@ -175,5 +187,6 @@ void menu()
 	cout << "\ti to print info on current position\n";
 	cout << "\te to print static evaluation\n";
 	cout << "\td to display board\n";
+	cout << "\tc to get computer move\n";
 	cout << "\tq to quit\n";
 }

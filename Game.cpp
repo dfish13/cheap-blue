@@ -1,21 +1,16 @@
 #include "Game.h"
-#include "Util.h"
-#include "Eval.h"
-
 
 void Game::init()
 {
 	pos = defaultPosition();
-	movestack.reserve(MOVE_STACK);
-	history.reserve(HIST_STACK);
+	pastMoves.reserve(PASTMOVES_STACK);
 }
 
 void Game::init(std::string fen)
 {
 	if (!getPositionFromFEN(pos, fen))
 		pos = defaultPosition();
-	movestack.reserve(MOVE_STACK);
-	history.reserve(HIST_STACK);
+	pastMoves.reserve(PASTMOVES_STACK);
 }
 
 void Game::load(std::string fen)
@@ -24,8 +19,7 @@ void Game::load(std::string fen)
 	if (getPositionFromFEN(p, fen))
 	{
 		pos = p;
-		movestack.clear();
-		history.clear();
+		pastMoves.clear();
 	}
 }
 
@@ -33,34 +27,23 @@ Move Game::getMove(int m) const
 {
 	Move move, imove;
 	imove.x = m;
-	std::set<int> moves = genMoves();
-	
-	if (imove.m.mtype & 32)
-	{
-		for (int x: moves)
-		{
-			move.x = x;
-			if (move.m.mtype & 32 && move.m.detail == imove.m.detail)
-				return move;
-		}
-	}
-
-	if (imove.m.mtype)  
-	{
-		if (moves.find(imove.x) != moves.end())
-			return imove;
-		else
-		{
-			move.m = {128, 0, 0, 0};
-			return move;
-		}
-	}
+	std::vector<int> moves;
+	moves.reserve(40);
+	genMoves(moves);
 	
 	for (int x: moves)
 	{
 		move.x = x;
+
+		// if move is a castle then we need to check what side (long or short).
+		if (move.m.mtype & 32)
+		{
+			if (imove.m.mtype & 32 && move.m.detail == imove.m.detail)
+				return move;
+		}
+
 		// if the from and to squares match up then we can infer this is the correct move
-		if (imove.m.from == move.m.from && imove.m.to == move.m.to && imove.m.detail == move.m.detail)
+		else if (imove.m.from == move.m.from && imove.m.to == move.m.to && imove.m.detail == move.m.detail)
 			return move; 
 	}
 
@@ -73,14 +56,14 @@ bool Game::makeMove(Move m)
 	if (m.m.mtype & 128)
 		return false;
 	
-	History h;
-	h.m = m;
-	h.capture = pos.squares[m.m.to].ptype;
-	h.castleRights = pos.castleRights;
-	h.ep = pos.enpassant;
-	h.fifty = pos.fifty;
-	h.hash = pos.hash;
-	history.push_back(h);
+	MoveInfo moveInfo;
+	moveInfo.m = m;
+	moveInfo.capture = pos.squares[m.m.to].ptype;
+	moveInfo.castleRights = pos.castleRights;
+	moveInfo.ep = pos.enpassant;
+	moveInfo.fifty = pos.fifty;
+	moveInfo.hash = pos.hash;
+	pastMoves.push_back(moveInfo);
 
 	// unset enpassant
 	pos.enpassant = NSQUARES;
@@ -171,19 +154,19 @@ bool Game::makeMove(Move m)
 
 bool Game::takeBack()
 {
-	if (history.empty())
+	if (pastMoves.empty())
 		return false;
-	History h = history[history.size() - 1];
+	MoveInfo mInfo = pastMoves[pastMoves.size() - 1];
 	Move m;
 
 	std::swap(pos.side, pos.xside);
 	--pos.ply;
-	history.pop_back();
-	m = h.m;
-	pos.castleRights = h.castleRights;
-	pos.enpassant = h.ep;
-	pos.fifty = h.fifty;
-	pos.hash = h.hash;
+	pastMoves.pop_back();
+	m = mInfo.m;
+	pos.castleRights = mInfo.castleRights;
+	pos.enpassant = mInfo.ep;
+	pos.fifty = mInfo.fifty;
+	pos.hash = mInfo.hash;
 	pos.squares[m.m.from].color = pos.side;
 	
 	if (m.m.mtype & 16) // Pawn promotion so change back to pawn.
@@ -191,10 +174,10 @@ bool Game::takeBack()
 	else
 		pos.squares[m.m.from].ptype = pos.squares[m.m.to].ptype;
 	
-	if (h.capture == any) // Restore captured piece.
+	if (mInfo.capture == any) // Restore captured piece.
 		pos.squares[m.m.to] = {none, any};
 	else
-		pos.squares[m.m.to] = {pos.xside, h.capture};
+		pos.squares[m.m.to] = {pos.xside, mInfo.capture};
 	
 	if (m.m.mtype & 32) // Restore rook for a castling move.
 	{
@@ -243,7 +226,7 @@ bool Game::takeBack()
 
 bool Game::isAttacked(int square, Color c) const
 {
-	for (int i = 1; i < 6; ++i)
+	for (int i = 1; i <= king; ++i)
 	{
 		for(int j = 0; j < offsets[i]; ++j)
 		{
@@ -253,7 +236,7 @@ bool Game::isAttacked(int square, Color c) const
 				if (n == -1) break;
 				if (pos.squares[n].color != none)
 				{
-					if (pos.squares[n].color == c && (pos.squares[n].ptype - pawn) == i)
+					if (pos.squares[n].color == c && pos.squares[n].ptype == i)
 						return true;
 					break;
 				}
@@ -281,14 +264,15 @@ bool Game::inCheck(Color c) const
 			return isAttacked(i, (c == white) ? black : white);
 	}
 	// Should not reach here, because that means there is no king
-	return true;
+	return false;
 }
 
-std::set<int> Game::genMoves() const
+int Game::genMoves(std::vector<int> & mstack) const
 {
-	std::set<int> moves;
 	Move move;
 	int promotionMoves[4];
+
+	int startSize = mstack.size();
 
 	Piece p;
 	for (uint8_t i = 0; i < 64; ++i)
@@ -298,11 +282,11 @@ std::set<int> Game::genMoves() const
 			p = pos.squares[i];
 			if (p.ptype != pawn)
 			{
-				for (int j = 0; j < offsets[p.ptype - pawn]; ++j)
+				for (int j = 0; j < offsets[p.ptype]; ++j)
 				{
 					for (int n = i;;)
 					{
-						n = mailbox[mailbox64[n] + offset[p.ptype - pawn][j]];
+						n = mailbox[mailbox64[n] + offset[p.ptype][j]];
 						if (n == -1) break;
 						if (pos.squares[n].color != none)
 						{
@@ -310,13 +294,13 @@ std::set<int> Game::genMoves() const
 							{
 								// capture
 								move.m = {64, i, static_cast<uint8_t>(n), 0};
-								moves.insert(move.x);
+								mstack.push_back(move.x);
 							}
 							break;
 						}
 						move.m = {0, i, static_cast<uint8_t>(n), 0};
-						moves.insert(move.x);
-						if (!slide[p.ptype - pawn]) break;
+						mstack.push_back(move.x);
+						if (!slide[p.ptype]) break;
 					}
 				}
 			}
@@ -332,26 +316,26 @@ std::set<int> Game::genMoves() const
                     if(pawnPromotionWhite || pawnPromotionBlack)
                     {
 						generatePawnPromotionMoves(i, singlePawnMove, promotionMoves);
-						for (int i = 0; i < 4; ++i)
-                        	moves.insert(promotionMoves[i]);
+						for (int j = 0; j < 4; ++j)
+                        	mstack.push_back(promotionMoves[j]);
                     }
 					else
 					{
 						move.m = {4, i, singlePawnMove, 0};
-						moves.insert(move.x);
+						mstack.push_back(move.x);
 					}
                     
                     //double pawn for white 
 					if (pos.side == white && (ROW(i) == 1) && pos.squares[doublePawnMove].color == none)
 					{
 						move.m = {8, i, doublePawnMove, 0};
-						moves.insert(move.x);
+						mstack.push_back(move.x);
 					}
                     //double pawn for black
 					if (pos.side == black && (ROW(i) == 6) && pos.squares[doublePawnMove].color == none)
 					{
 						move.m = {8, i, doublePawnMove, 0};
-						moves.insert(move.x);
+						mstack.push_back(move.x);
 					}
 
 				}
@@ -362,19 +346,19 @@ std::set<int> Game::genMoves() const
                     if(pawnPromotionWhite || pawnPromotionBlack)
                     {
 						generatePawnPromotionMoves(i, n, promotionMoves);
-						for (int i = 0; i < 4; ++i)
-							moves.insert(promotionMoves[i]);
+						for (int j = 0; j < 4; ++j)
+							mstack.push_back(promotionMoves[j]);
                     }
 					else 
 					{
 						move.m = {64, i, static_cast<uint8_t>(n), 0};
-						moves.insert(move.x);
+						mstack.push_back(move.x);
 					}
 				}
 				if (n == pos.enpassant)
 				{
 					move.m = {2, i, static_cast<uint8_t>(n), 0};
-					moves.insert(move.x);
+					mstack.push_back(move.x);
 				}
 				// pawn capture square
 				n = mailbox[mailbox64[i] + m * -11];
@@ -383,22 +367,21 @@ std::set<int> Game::genMoves() const
                     if(pawnPromotionWhite || pawnPromotionBlack)
                     {
 						generatePawnPromotionMoves(i, n, promotionMoves);
-                        for (int i = 0; i < 4; ++i)
-							moves.insert(promotionMoves[i]);
+                        for (int j = 0; j < 4; ++j)
+							mstack.push_back(promotionMoves[j]);
                     }
 					else 
 					{
 						move.m = {64, i, static_cast<uint8_t>(n), 0};
-						moves.insert(move.x);
+						mstack.push_back(move.x);
 					}
 				}
 				if (n == pos.enpassant)
 				{
 					move.m = {2, i, static_cast<uint8_t>(n), 0};
-					moves.insert(move.x);
+					mstack.push_back(move.x);
 				}
 			}
-
 		}
 	}
 
@@ -416,7 +399,7 @@ std::set<int> Game::genMoves() const
 		!isAttacked(E1 + rshift, pos.xside))
 	{
 		move.m = {32, static_cast<uint8_t>(E1 + rshift), static_cast<uint8_t>(C1 + rshift), 1};
-		moves.insert(move.x);
+		mstack.push_back(move.x);
 	}
 
 	// Kingside (short) castle.
@@ -428,15 +411,165 @@ std::set<int> Game::genMoves() const
 		!isAttacked(G1 + rshift, pos.xside))
 	{
 		move.m = {32, static_cast<uint8_t>(E1 + rshift), static_cast<uint8_t>(G1 + rshift), 2};
-		moves.insert(move.x);
+		mstack.push_back(move.x);
 	}
-	return moves;
+
+	return mstack.size() - startSize;
+}
+
+int Game::genCaptures(std::vector<int> & mstack) const
+{
+	Move move;
+	int promotionMoves[4];
+
+	int startSize = mstack.size();
+
+	Piece p;
+	for (uint8_t i = 0; i < 64; ++i)
+	{
+		if (pos.squares[i].color == pos.side)
+		{
+			p = pos.squares[i];
+			if (p.ptype == pawn)
+			{
+				if (pos.side == white)
+				{
+					if (COL(i) != 0 && pos.squares[i + 7].color == black)
+					{
+						if (ROW(i) == 6)
+						{
+							generatePawnPromotionMoves(i, i + 7, promotionMoves);
+                        	for (int j = 0; j < 4; ++j)
+								mstack.push_back(promotionMoves[j]);
+						}
+						else
+						{
+							move.m = {64, i, static_cast<uint8_t>(i + 7), 0};
+							mstack.push_back(move.x);
+						}
+						
+					}
+					if (COL(i) != 7 && pos.squares[i + 9].color == black)
+					{
+						if (ROW(i) == 6)
+						{
+							generatePawnPromotionMoves(i, i + 9, promotionMoves);
+                        	for (int j = 0; j < 4; ++j)
+								mstack.push_back(promotionMoves[j]);
+						}
+						else
+						{
+							move.m = {64, i, static_cast<uint8_t>(i + 9), 0};
+							mstack.push_back(move.x);
+						}
+					}
+					if ((ROW(i) == 6) && pos.squares[i + 8].color == none)
+					{
+						generatePawnPromotionMoves(i, i + 8, promotionMoves);
+                        for (int j = 0; j < 4; ++j)
+							mstack.push_back(promotionMoves[j]);
+					}
+				}
+				if (pos.side == black)
+				{
+					if (COL(i) != 0 && pos.squares[i - 9].color == white)
+					{
+						if (ROW(i) == 1)
+						{
+							generatePawnPromotionMoves(i, i - 9, promotionMoves);
+                        	for (int j = 0; j < 4; ++j)
+								mstack.push_back(promotionMoves[j]);
+						}
+						else
+						{
+							move.m = {64, i, static_cast<uint8_t>(i - 9), 0};
+							mstack.push_back(move.x);
+						}
+					}
+					if (COL(i) != 7 && pos.squares[i - 7].color == white)
+					{
+						if (ROW(i) == 1)
+						{
+							generatePawnPromotionMoves(i, i - 7, promotionMoves);
+                        	for (int j = 0; j < 4; ++j)
+								mstack.push_back(promotionMoves[j]);
+						}
+						else
+						{
+							move.m = {64, i, static_cast<uint8_t>(i - 7), 0};
+							mstack.push_back(move.x);
+						}
+					}
+					if (i <= 15 && pos.squares[i - 8].color == none)
+					{
+						generatePawnPromotionMoves(i, i - 8, promotionMoves);
+                        for (int j = 0; j < 4; ++j)
+							mstack.push_back(promotionMoves[j]);
+					}
+				}
+			}
+			else
+			{
+				for (int j = 0; j < offsets[p.ptype]; ++j)
+				{
+					for (int n = i;;)
+					{
+						n = mailbox[mailbox64[n] + offset[p.ptype][j]];
+						if (n == -1) break;
+						if (pos.squares[n].color != none)
+						{
+							if (pos.squares[n].color == pos.xside)
+							{
+								// capture
+								move.m = {64, i, static_cast<uint8_t>(n), 0};
+								mstack.push_back(move.x);
+							}
+							break;
+						}
+						if (!slide[p.ptype]) break;
+					}
+				}
+			}
+		}
+	}
+
+	if (pos.enpassant < NSQUARES)
+	{
+		if (pos.side == white)
+		{
+			if (COL(pos.enpassant) != 0 && Piece({white, pawn}) == pos.squares[pos.enpassant - 9])
+			{
+				move.m = {2, static_cast<uint8_t>(pos.enpassant - 9), static_cast<uint8_t>(pos.enpassant), 0};
+				mstack.push_back(move.x);
+			}
+			if (COL(pos.enpassant) != 7 && Piece({white, pawn}) == pos.squares[pos.enpassant - 7])
+			{
+				move.m = {2, static_cast<uint8_t>(pos.enpassant - 7), static_cast<uint8_t>(pos.enpassant), 0};
+				mstack.push_back(move.x);
+			}
+		}
+		else
+		{
+			if (COL(pos.enpassant) != 0 && Piece({black, pawn}) == pos.squares[pos.enpassant + 7])
+			{
+				move.m = {2, static_cast<uint8_t>(pos.enpassant + 7), static_cast<uint8_t>(pos.enpassant), 0};
+				mstack.push_back(move.x);
+			}
+			if (COL(pos.enpassant) != 7 && Piece({black, pawn}) == pos.squares[pos.enpassant + 9])
+			{
+				move.m = {2, static_cast<uint8_t>(pos.enpassant + 9), static_cast<uint8_t>(pos.enpassant), 0};
+				mstack.push_back(move.x);
+			}
+		}
+	}
+
+	return mstack.size() - startSize;
 }
 
 std::vector<int> Game::genLegalMoves()
 {
-	std::vector<int> legalmoves;
-	std::set<int> moves = genMoves();
+	std::vector<int> legalmoves, moves;
+	genMoves(moves);
 	Move m;
 
 	legalmoves.reserve(moves.size());
@@ -449,6 +582,7 @@ std::vector<int> Game::genLegalMoves()
 			takeBack();
 		}	
 	}
+
 	return legalmoves;
 }
 
@@ -501,8 +635,9 @@ long Game::Perft(int depth)
 		return 1;
 	long nodes = 0;
 	Move m;
-
-	std::set<int> moves = genMoves();
+	std::vector<int> moves;
+	moves.reserve(40);
+	genMoves(moves);
 	for (int x: moves)
 	{
 		m.x = x;
@@ -516,10 +651,15 @@ long Game::Perft(int depth)
 
 }
 
-double Game::Eval()
+double Game::Evaluation()
 {
 	double score;
-	score = (double) eval(pos);
+	score = (double) Eval::eval(pos);
 	score /= 100.0;
 	return (pos.side == white) ? score : -score;
+}
+
+int Game::eval()
+{
+	return Eval::eval(pos);
 }

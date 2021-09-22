@@ -1,19 +1,15 @@
 #ifndef GAME_H
 #define GAME_H 
 
-
 #include <vector>
-#include <set>
-#include <iostream>
-#include <utility>
-#include <cstdint>
+#include <ostream>
 #include <cstdlib>
 
 #include "Defs.h"
+#include "Eval.h"
+#include "Util.h"
 
-#define MOVE_STACK	1120
-#define HIST_STACK	400
-#define MAX_PLY		32
+#define PASTMOVES_STACK	200
 
 const int mailbox[120] = {
 -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
@@ -109,7 +105,10 @@ public:
 	Move getMove(int m) const;
 
 	// Generates psuedo-legal moves for the current position (making a move could leave the king in check).	
-	std::set<int> genMoves() const;
+	// Returns the number of moves added to mstack.
+	int genMoves(std::vector<int> & mstack) const;
+
+	int genCaptures(std::vector<int> & mstack) const;
 
 	// Generates legal moves by making move and checking if king is in check.
 	std::vector<int> genLegalMoves();
@@ -129,13 +128,21 @@ public:
 	Move getRandomMove();
 	long Perft(int depth);
 
+	void printVariation(std::ostream & os)
+	{
+		for (MoveInfo mi: pastMoves)
+			os << getMoveString(mi.m) << ' ';
+		os << '\n';
+	}
+
 	// Get static evaluation. Positive values mean white is better
-	double Eval();
+	double Evaluation();
+
+	// Evaluation value to be used in minimax algorithm.
+	int eval();
 
 	Position pos;
-	int first_move[MAX_PLY];
-	std::vector<Move> movestack;
-	std::vector<History> history;
+	std::vector<MoveInfo> pastMoves;
 
 private:
 
