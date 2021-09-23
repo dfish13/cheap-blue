@@ -83,6 +83,9 @@ int Engine::search(int alpha, int beta, int depth)
 
     firstMove[ply + 1] = game->genMoves(moveStack) + firstMove[ply];
 
+    if (followPV)
+        sortPV();
+
     f = false;
     for (i = firstMove[ply]; i < firstMove[ply + 1]; ++i)
     {
@@ -146,6 +149,9 @@ int Engine::quiesce(int alpha, int beta)
 
     firstMove[ply + 1] = game->genCaptures(moveStack) + firstMove[ply];
 
+    if (followPV)
+        sortPV();
+
     for (i = firstMove[ply]; i < firstMove[ply + 1]; ++i)
     {
         if (!game->makeMove(moveStack[i]))
@@ -172,6 +178,18 @@ int Engine::quiesce(int alpha, int beta)
     moveStack.erase(moveStack.begin() + firstMove[ply], moveStack.end());
 
     return alpha;
+}
+
+void Engine::sortPV()
+{
+	followPV = false;
+	for(int i = firstMove[ply]; i < firstMove[ply + 1]; ++i)
+		if (moveStack[i] == pv[0][ply])
+        {
+			followPV = true;
+			std::swap(moveStack[firstMove[ply]], moveStack[i]);
+			return;
+		}
 }
 
 void Engine::checkup()

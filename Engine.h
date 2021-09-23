@@ -29,6 +29,8 @@ public:
     int search(int alpha, int beta, int depth);
     int quiesce(int alpha, int beta);
 
+    void sortPV();
+
     void checkup();
 
     Move move();
