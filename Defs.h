@@ -110,8 +110,6 @@ struct Position
 	Piece squares[NSQUARES];
 	// Side has the move, xside is other.
 	Color side, xside;
-    // Half move counter.
-	int ply;
     // The value of the square that can be taken with enpassant.
 	uint8_t enpassant;
     /*
@@ -125,7 +123,7 @@ struct Position
     */
 	uint8_t castleRights;
 
-	// Number of moves made since the last irreversible move. 50 in a row means the game is a draw.
+	// Number of half moves made since the last irreversible move. 50 (100 half moves) in a row means the game is a draw.
 	int fifty;
 
 	// Zobrist hash of the position

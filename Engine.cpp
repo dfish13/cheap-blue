@@ -14,8 +14,7 @@ Engine::Engine(Game * g, std::ostream * o) : game(g), os(o), verbose(true)
 
 void Engine::init()
 {
-    moveStack.reserve(MOVE_STACK);
-    maxDepth = 8;
+    maxDepth = 20;
 }
 
 void Engine::think(int ms)
@@ -28,7 +27,6 @@ void Engine::think(int ms)
     ply = 0;
     nodes = 0;
     memset(pv, 0, sizeof(pv));
-    firstMove[0] = 0;
     try
     {
         if (verbose)
@@ -43,7 +41,7 @@ void Engine::think(int ms)
                 (*os) << std::setw(11) << nodes;
                 (*os) << std::setw(7) << x;
                 for (j = 0; j < pvLength[0]; ++j)
-                    (*os) << ' ' << getMoveString(pv[0][j]);
+                    (*os) << "  " << getMoveString(pv[0][j]);
                 (*os) << '\n';
             }
             if (x > 9000 || x < -9000)
@@ -56,7 +54,6 @@ void Engine::think(int ms)
             (*os) << "Time is up!\n";
         while (ply--)
             game->takeBack();
-        moveStack.clear();
     }
 }
 
@@ -80,16 +77,18 @@ int Engine::search(int alpha, int beta, int depth)
     c = game->inCheck(game->pos.side);
 	if (c)
 		++depth;
-
-    firstMove[ply + 1] = game->genMoves(moveStack) + firstMove[ply];
+    std::vector<int> moves;
+    moves.reserve(50);
+    game->genMoves(moves);
 
     if (followPV)
-        sortPV();
+        sortPV(moves);
 
+    sort(moves);
     f = false;
-    for (i = firstMove[ply]; i < firstMove[ply + 1]; ++i)
+    for (int m : moves)
     {
-        if (!game->makeMove(moveStack[i]))
+        if (!game->makeMove(m))
             continue;
 
         f = true;
@@ -101,19 +100,14 @@ int Engine::search(int alpha, int beta, int depth)
         if (x > alpha) // Cutoff
         {       
             if (x >= beta)
-            {
-                moveStack.erase(moveStack.begin() + firstMove[ply], moveStack.end());
                 return beta;
-            }
             alpha = x;
-            pv[ply][ply] = moveStack[i];
+            pv[ply][ply] = m;
             for (j = ply + 1; j < pvLength[ply + 1]; ++j)
 				pv[ply][j] = pv[ply + 1][j];
 			pvLength[ply] = pvLength[ply + 1];
         }
     }
-
-    moveStack.erase(moveStack.begin() + firstMove[ply], moveStack.end());
     
     if (!f)
     {
@@ -147,14 +141,17 @@ int Engine::quiesce(int alpha, int beta)
 	if (x > alpha)
 		alpha = x;
 
-    firstMove[ply + 1] = game->genCaptures(moveStack) + firstMove[ply];
+    std::vector<int> moves;
+    moves.reserve(25);
+    game->genCaptures(moves);
 
     if (followPV)
-        sortPV();
+        sortPV(moves);
 
-    for (i = firstMove[ply]; i < firstMove[ply + 1]; ++i)
+    sort(moves);
+    for (int m: moves)
     {
-        if (!game->makeMove(moveStack[i]))
+        if (!game->makeMove(m))
             continue;
         ++ply;
         x = -quiesce(-beta, -alpha);
@@ -164,32 +161,61 @@ int Engine::quiesce(int alpha, int beta)
         if (x > alpha) // Cutoff
         {       
             if (x >= beta)
-            {
-                moveStack.erase(moveStack.begin() + firstMove[ply], moveStack.end());
                 return beta;
-            }
             alpha = x;
-            pv[ply][ply] = moveStack[i];
+            pv[ply][ply] = m;
             for (j = ply + 1; j < pvLength[ply + 1]; ++j)
 				pv[ply][j] = pv[ply + 1][j];
 			pvLength[ply] = pvLength[ply + 1];
         }
     }
-    moveStack.erase(moveStack.begin() + firstMove[ply], moveStack.end());
 
     return alpha;
 }
 
-void Engine::sortPV()
+void Engine::sortPV(std::vector<int> & moves)
 {
 	followPV = false;
-	for(int i = firstMove[ply]; i < firstMove[ply + 1]; ++i)
-		if (moveStack[i] == pv[0][ply])
+	for(int i = 0; i < moves.size(); ++i)
+		if (moves[i] == pv[0][ply])
         {
 			followPV = true;
-			std::swap(moveStack[firstMove[ply]], moveStack[i]);
+			std::swap(moves[0], moves[i]);
 			return;
 		}
+}
+
+void Engine::score(std::vector<int> & moves, int * scores)
+{
+    Move m;
+    Piece * p = (game->pos.squares) ;
+    for (int i = 0; i < moves.size(); ++i)
+    {
+        m.x = moves[i];
+        if (m.m.mtype & 16)
+            scores[i] = 1000000 + ((int) m.m.detail) * 10;
+        else if (p[m.m.to].color != none)
+            scores[i] = 1000000 + p[m.m.to].ptype * 10 - p[m.m.from].ptype;
+        else
+            scores[i] = 0;
+
+    }
+}
+
+void Engine::sort(std::vector<int> & moves)
+{
+    int * scores = new int[moves.size()];
+    score(moves, scores);
+
+    int i, j;
+    for (i = (followPV) ? 1 : 0; i < moves.size(); ++i)
+        for (j = moves.size() - 1; j > i; --j)
+            if (scores[j] > scores[j - 1])
+            {
+                std::swap(scores[j], scores[j - 1]);
+                std::swap(moves[j], moves[j - 1]);
+            }
+    delete [] scores;
 }
 
 void Engine::checkup()

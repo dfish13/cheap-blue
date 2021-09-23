@@ -42,7 +42,7 @@ int main(int argc, char ** argv)
 			fen = argv[2];
 			game.init(fen);
 			Engine engine(&game);
-			engine.think(2000);
+			engine.think(3000);
 			move = engine.move();
 			cout << getMoveString(move);
 			return 0;
@@ -125,7 +125,7 @@ int main(int argc, char ** argv)
 		}
 		else if (s == "c")
 		{
-			engine.think(2000);
+			engine.think(5000);
 			move = engine.move();
 			cout << getMoveString(move) << '\n';
 		}

@@ -1,10 +1,12 @@
 
 CC=g++
 FLAGS=-std=c++14
-EXE=main
+EXE=cheapblue
 
 DBG=debug
 BIN=bin
+
+APPDIR=../cheap-blue-app/src/
 
 SRC=$(wildcard *.cpp)
 HDRS=$(wildcard *.h)
@@ -13,8 +15,9 @@ DBGOBJ=$(patsubst %.cpp, $(DBG)/%.o, $(SRC))
 
 all: $(EXE)
 	
-$(EXE): $(OBJ)
-	$(CC) -o $(BIN)/$@ $^ $(FLAGS)
+$(EXE): $(OBJ) $(HDRS)
+	$(CC) -o $(BIN)/$@ $(OBJ) $(FLAGS)
+	cp $(BIN)/$(EXE) $(APPDIR)
 
 $(BIN)/%.o: %.cpp
 	@mkdir -p $(BIN)
@@ -24,8 +27,8 @@ $(DBG)/%.o: %.cpp
 	@mkdir -p $(DBG)
 	$(CC) $(FLAGS) -g -o $@ -c $^
 
-$(DBG)/$(EXE): $(DBGOBJ)
-	$(CC) $(FLAGS) -g -o $@ $^
+$(DBG)/$(EXE): $(DBGOBJ) $(HDRS)
+	$(CC) $(FLAGS) -g -o $@ $(DBGOBJ)
 
 run: $(BIN)/$(EXE)
 	./$(BIN)/$(EXE)

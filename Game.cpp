@@ -140,7 +140,6 @@ bool Game::makeMove(Move m)
 	else
 		++pos.fifty;
 	std::swap(pos.side, pos.xside);
-	++pos.ply;
 
 	if (inCheck(pos.xside))
 	{
@@ -160,7 +159,6 @@ bool Game::takeBack()
 	Move m;
 
 	std::swap(pos.side, pos.xside);
-	--pos.ply;
 	pastMoves.pop_back();
 	m = mInfo.m;
 	pos.castleRights = mInfo.castleRights;

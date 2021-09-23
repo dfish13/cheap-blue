@@ -11,7 +11,6 @@
 #include "Util.h"
 #include "Game.h"
 
-#define MOVE_STACK  1024
 #define MAX_PLY		64
 
 struct TimeIsUp {};
@@ -29,7 +28,9 @@ public:
     int search(int alpha, int beta, int depth);
     int quiesce(int alpha, int beta);
 
-    void sortPV();
+    void sortPV(std::vector<int> & moves);
+    void score(std::vector<int> & moves, int * scores);
+    void sort(std::vector<int> & moves);
 
     void checkup();
 
@@ -38,8 +39,6 @@ public:
 private:
     Game * game;
 
-    std::vector<int> moveStack;
-    int firstMove[MAX_PLY];
     int pvLength[MAX_PLY];
     bool followPV;
     int maxDepth;

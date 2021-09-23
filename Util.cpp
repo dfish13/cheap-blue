@@ -186,7 +186,6 @@ Position defaultPosition()
 
 	pos.side = white;
 	pos.xside = black;
-	pos.ply = 0;
 	pos.castleRights = 15;
 	pos.fifty = 0;
 	pos.enpassant = NSQUARES;
@@ -254,10 +253,11 @@ bool getPositionFromFEN(Position & pos, std::string fen)
 	if (i < fen.size())
 	{
 		std::istringstream iss(fen.substr(i));
-		iss >> pos.fifty >> pos.ply;
+		iss >> pos.fifty;
+		// We dont care about full move counter.
 	}
 	else
-		pos.fifty = pos.ply = 0;
+		pos.fifty = 0;
 
 	return true;
 }
@@ -292,7 +292,6 @@ void printPosition(std::ostream & os, const Position & p)
 		s = "invalid\n";
 	os << "side = " << s;
 	os << "enpassant = " << indexToSquare(p.enpassant) << '\n';
-	os << "ply = " << p.ply << '\n';
 	os << "fifty = " << p.fifty << '\n';
 
 	s.clear();
