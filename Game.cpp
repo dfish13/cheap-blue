@@ -265,12 +265,10 @@ bool Game::inCheck(Color c) const
 	return false;
 }
 
-int Game::genMoves(std::vector<int> & mstack) const
+void Game::genMoves(std::vector<int> & moves) const
 {
 	Move move;
 	int promotionMoves[4];
-
-	int startSize = mstack.size();
 
 	Piece p;
 	for (uint8_t i = 0; i < 64; ++i)
@@ -292,12 +290,12 @@ int Game::genMoves(std::vector<int> & mstack) const
 							{
 								// capture
 								move.m = {64, i, static_cast<uint8_t>(n), 0};
-								mstack.push_back(move.x);
+								moves.push_back(move.x);
 							}
 							break;
 						}
 						move.m = {0, i, static_cast<uint8_t>(n), 0};
-						mstack.push_back(move.x);
+						moves.push_back(move.x);
 						if (!slide[p.ptype]) break;
 					}
 				}
@@ -315,25 +313,25 @@ int Game::genMoves(std::vector<int> & mstack) const
                     {
 						generatePawnPromotionMoves(i, singlePawnMove, promotionMoves);
 						for (int j = 0; j < 4; ++j)
-                        	mstack.push_back(promotionMoves[j]);
+                        	moves.push_back(promotionMoves[j]);
                     }
 					else
 					{
 						move.m = {4, i, singlePawnMove, 0};
-						mstack.push_back(move.x);
+						moves.push_back(move.x);
 					}
                     
                     //double pawn for white 
 					if (pos.side == white && (ROW(i) == 1) && pos.squares[doublePawnMove].color == none)
 					{
 						move.m = {8, i, doublePawnMove, 0};
-						mstack.push_back(move.x);
+						moves.push_back(move.x);
 					}
                     //double pawn for black
 					if (pos.side == black && (ROW(i) == 6) && pos.squares[doublePawnMove].color == none)
 					{
 						move.m = {8, i, doublePawnMove, 0};
-						mstack.push_back(move.x);
+						moves.push_back(move.x);
 					}
 
 				}
@@ -345,18 +343,18 @@ int Game::genMoves(std::vector<int> & mstack) const
                     {
 						generatePawnPromotionMoves(i, n, promotionMoves);
 						for (int j = 0; j < 4; ++j)
-							mstack.push_back(promotionMoves[j]);
+							moves.push_back(promotionMoves[j]);
                     }
 					else 
 					{
 						move.m = {64, i, static_cast<uint8_t>(n), 0};
-						mstack.push_back(move.x);
+						moves.push_back(move.x);
 					}
 				}
 				if (n == pos.enpassant)
 				{
 					move.m = {2, i, static_cast<uint8_t>(n), 0};
-					mstack.push_back(move.x);
+					moves.push_back(move.x);
 				}
 				// pawn capture square
 				n = mailbox[mailbox64[i] + m * -11];
@@ -366,18 +364,18 @@ int Game::genMoves(std::vector<int> & mstack) const
                     {
 						generatePawnPromotionMoves(i, n, promotionMoves);
                         for (int j = 0; j < 4; ++j)
-							mstack.push_back(promotionMoves[j]);
+							moves.push_back(promotionMoves[j]);
                     }
 					else 
 					{
 						move.m = {64, i, static_cast<uint8_t>(n), 0};
-						mstack.push_back(move.x);
+						moves.push_back(move.x);
 					}
 				}
 				if (n == pos.enpassant)
 				{
 					move.m = {2, i, static_cast<uint8_t>(n), 0};
-					mstack.push_back(move.x);
+					moves.push_back(move.x);
 				}
 			}
 		}
@@ -397,7 +395,7 @@ int Game::genMoves(std::vector<int> & mstack) const
 		!isAttacked(E1 + rshift, pos.xside))
 	{
 		move.m = {32, static_cast<uint8_t>(E1 + rshift), static_cast<uint8_t>(C1 + rshift), 1};
-		mstack.push_back(move.x);
+		moves.push_back(move.x);
 	}
 
 	// Kingside (short) castle.
@@ -409,18 +407,14 @@ int Game::genMoves(std::vector<int> & mstack) const
 		!isAttacked(G1 + rshift, pos.xside))
 	{
 		move.m = {32, static_cast<uint8_t>(E1 + rshift), static_cast<uint8_t>(G1 + rshift), 2};
-		mstack.push_back(move.x);
+		moves.push_back(move.x);
 	}
-
-	return mstack.size() - startSize;
 }
 
-int Game::genCaptures(std::vector<int> & mstack) const
+void Game::genCaptures(std::vector<int> & moves) const
 {
 	Move move;
 	int promotionMoves[4];
-
-	int startSize = mstack.size();
 
 	Piece p;
 	for (uint8_t i = 0; i < 64; ++i)
@@ -438,12 +432,12 @@ int Game::genCaptures(std::vector<int> & mstack) const
 						{
 							generatePawnPromotionMoves(i, i + 7, promotionMoves);
                         	for (int j = 0; j < 4; ++j)
-								mstack.push_back(promotionMoves[j]);
+								moves.push_back(promotionMoves[j]);
 						}
 						else
 						{
 							move.m = {64, i, static_cast<uint8_t>(i + 7), 0};
-							mstack.push_back(move.x);
+							moves.push_back(move.x);
 						}
 						
 					}
@@ -453,19 +447,19 @@ int Game::genCaptures(std::vector<int> & mstack) const
 						{
 							generatePawnPromotionMoves(i, i + 9, promotionMoves);
                         	for (int j = 0; j < 4; ++j)
-								mstack.push_back(promotionMoves[j]);
+								moves.push_back(promotionMoves[j]);
 						}
 						else
 						{
 							move.m = {64, i, static_cast<uint8_t>(i + 9), 0};
-							mstack.push_back(move.x);
+							moves.push_back(move.x);
 						}
 					}
 					if ((ROW(i) == 6) && pos.squares[i + 8].color == none)
 					{
 						generatePawnPromotionMoves(i, i + 8, promotionMoves);
                         for (int j = 0; j < 4; ++j)
-							mstack.push_back(promotionMoves[j]);
+							moves.push_back(promotionMoves[j]);
 					}
 				}
 				if (pos.side == black)
@@ -476,12 +470,12 @@ int Game::genCaptures(std::vector<int> & mstack) const
 						{
 							generatePawnPromotionMoves(i, i - 9, promotionMoves);
                         	for (int j = 0; j < 4; ++j)
-								mstack.push_back(promotionMoves[j]);
+								moves.push_back(promotionMoves[j]);
 						}
 						else
 						{
 							move.m = {64, i, static_cast<uint8_t>(i - 9), 0};
-							mstack.push_back(move.x);
+							moves.push_back(move.x);
 						}
 					}
 					if (COL(i) != 7 && pos.squares[i - 7].color == white)
@@ -490,19 +484,19 @@ int Game::genCaptures(std::vector<int> & mstack) const
 						{
 							generatePawnPromotionMoves(i, i - 7, promotionMoves);
                         	for (int j = 0; j < 4; ++j)
-								mstack.push_back(promotionMoves[j]);
+								moves.push_back(promotionMoves[j]);
 						}
 						else
 						{
 							move.m = {64, i, static_cast<uint8_t>(i - 7), 0};
-							mstack.push_back(move.x);
+							moves.push_back(move.x);
 						}
 					}
 					if (i <= 15 && pos.squares[i - 8].color == none)
 					{
 						generatePawnPromotionMoves(i, i - 8, promotionMoves);
                         for (int j = 0; j < 4; ++j)
-							mstack.push_back(promotionMoves[j]);
+							moves.push_back(promotionMoves[j]);
 					}
 				}
 			}
@@ -520,7 +514,7 @@ int Game::genCaptures(std::vector<int> & mstack) const
 							{
 								// capture
 								move.m = {64, i, static_cast<uint8_t>(n), 0};
-								mstack.push_back(move.x);
+								moves.push_back(move.x);
 							}
 							break;
 						}
@@ -538,12 +532,12 @@ int Game::genCaptures(std::vector<int> & mstack) const
 			if (COL(pos.enpassant) != 0 && Piece({white, pawn}) == pos.squares[pos.enpassant - 9])
 			{
 				move.m = {2, static_cast<uint8_t>(pos.enpassant - 9), static_cast<uint8_t>(pos.enpassant), 0};
-				mstack.push_back(move.x);
+				moves.push_back(move.x);
 			}
 			if (COL(pos.enpassant) != 7 && Piece({white, pawn}) == pos.squares[pos.enpassant - 7])
 			{
 				move.m = {2, static_cast<uint8_t>(pos.enpassant - 7), static_cast<uint8_t>(pos.enpassant), 0};
-				mstack.push_back(move.x);
+				moves.push_back(move.x);
 			}
 		}
 		else
@@ -551,17 +545,15 @@ int Game::genCaptures(std::vector<int> & mstack) const
 			if (COL(pos.enpassant) != 0 && Piece({black, pawn}) == pos.squares[pos.enpassant + 7])
 			{
 				move.m = {2, static_cast<uint8_t>(pos.enpassant + 7), static_cast<uint8_t>(pos.enpassant), 0};
-				mstack.push_back(move.x);
+				moves.push_back(move.x);
 			}
 			if (COL(pos.enpassant) != 7 && Piece({black, pawn}) == pos.squares[pos.enpassant + 9])
 			{
 				move.m = {2, static_cast<uint8_t>(pos.enpassant + 9), static_cast<uint8_t>(pos.enpassant), 0};
-				mstack.push_back(move.x);
+				moves.push_back(move.x);
 			}
 		}
 	}
-
-	return mstack.size() - startSize;
 }
 
 std::vector<int> Game::genLegalMoves()

@@ -106,9 +106,9 @@ public:
 
 	// Generates psuedo-legal moves for the current position (making a move could leave the king in check).	
 	// Returns the number of moves added to mstack.
-	int genMoves(std::vector<int> & mstack) const;
+	void genMoves(std::vector<int> & mstack) const;
 
-	int genCaptures(std::vector<int> & mstack) const;
+	void genCaptures(std::vector<int> & mstack) const;
 
 	// Generates legal moves by making move and checking if king is in check.
 	std::vector<int> genLegalMoves();

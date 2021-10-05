@@ -1,12 +1,12 @@
 
 CC=g++
 FLAGS=-std=c++14
-EXE=cheapblue
+EXE=main
 
 DBG=debug
 BIN=bin
 
-APPDIR=../cheap-blue-app/src/
+APPDIR=../
 
 SRC=$(wildcard *.cpp)
 HDRS=$(wildcard *.h)
@@ -17,7 +17,6 @@ all: $(EXE)
 	
 $(EXE): $(OBJ) $(HDRS)
 	$(CC) -o $(BIN)/$@ $(OBJ) $(FLAGS)
-	cp $(BIN)/$(EXE) $(APPDIR)
 
 $(BIN)/%.o: %.cpp
 	@mkdir -p $(BIN)
