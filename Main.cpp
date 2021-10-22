@@ -22,6 +22,8 @@ int main(int argc, char ** argv)
 	Game game;
 	Move move;
 	int depth;
+	int thinkingTime;
+	int pvSort;
 
 	// If there are any command line arguments
 	if (argc > 1)
@@ -36,13 +38,14 @@ int main(int argc, char ** argv)
 		{
 			fen = argv[2];
 		}
-		else if (arg == "-m" && argc > 2)
+		else if (arg == "-m" && argc > 4)
 		{
-			// For now, just pick a random move from the set of possible moves.
-			fen = argv[2];
+			thinkingTime = stoi(argv[2]);
+			pvSort = stoi(argv[3]);
+			fen = argv[4];
 			game.init(fen);
-			Engine engine(&game);
-			engine.think(3000);
+			Engine engine(&game, {static_cast<bool>(pvSort)});
+			engine.think(thinkingTime * 1000);
 			move = engine.move();
 			cout << getMoveString(move);
 			return 0;
@@ -63,7 +66,7 @@ int main(int argc, char ** argv)
 			cout << "Unrecognized command line argument\n";
 			cout << "Valid options are:\n\n";
 			cout << "\t-t: run tests\n";
-			cout << "\t-m \"<fen>\": get engine move\n";
+			cout << "\t-m <time> <pvsort> \"<fen>\": get engine move\n";
 			cout << "\t-p <depth> \"<fen>\": run perft test\n";
 			cout << "\t-f \"<fen>\": load game from FEN string\n\n";
 			return 0;

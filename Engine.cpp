@@ -2,9 +2,9 @@
 
 bool globalFlag;
 
-Engine::Engine(Game * g) : game(g), verbose(false)
+Engine::Engine(Game * g, EngineConfig ec) : game(g), verbose(false)
 {
-    init();
+    init(ec);
 }
 
 Engine::Engine(Game * g, std::ostream * o) : game(g), os(o), verbose(true)
@@ -12,15 +12,15 @@ Engine::Engine(Game * g, std::ostream * o) : game(g), os(o), verbose(true)
     init();
 }
 
-void Engine::init()
+void Engine::init(EngineConfig ec)
 {
     maxDepth = 20;
+    config = ec;
 }
 
 void Engine::think(int ms)
 {
     int i, j, x;
-    globalFlag = true;
     std::chrono::duration<int, std::milli> duration(ms);
     end = std::chrono::high_resolution_clock::now() + duration; 
 
@@ -33,7 +33,7 @@ void Engine::think(int ms)
             (*os) << "ply      nodes  score  pv\n";
         for (i = 1; i <= maxDepth; ++i)
         {
-            followPV = true;
+            followPV = config.pvSort;
             x = search(-10000, 10000, i);
             if (verbose)
             {

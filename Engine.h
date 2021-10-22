@@ -19,10 +19,10 @@ class Engine
 {
 
 public:
-    Engine(Game * g);
+    Engine(Game * g, EngineConfig ec = {true});
     Engine(Game * g, std::ostream * o);
 
-    void init();
+    void init(EngineConfig ec  = {true});
 
     void think(int ms);
     int search(int alpha, int beta, int depth);
@@ -49,6 +49,8 @@ private:
     std::chrono::high_resolution_clock::time_point now, end;
 
     int pv[MAX_PLY][MAX_PLY];
+
+    EngineConfig config;
 
 };
 

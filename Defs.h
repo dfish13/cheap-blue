@@ -143,5 +143,14 @@ struct MoveInfo
 };
 
 
+// Contains information for configuring the engines search.
+struct EngineConfig
+{
+
+	// Searches the principle variation move first if we are still following the pv.
+  bool pvSort;
+};
+
+
 
 #endif 
