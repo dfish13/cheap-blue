@@ -8,6 +8,7 @@
 #include "Defs.h"
 #include "Eval.h"
 #include "Util.h"
+#include "Hash.h"
 
 #define PASTMOVES_STACK	200
 
@@ -113,9 +114,6 @@ public:
 	// Generates legal moves by making move and checking if king is in check.
 	std::vector<int> genLegalMoves();
 
-
-	void setHash();
-
 	/*
 		Same display board function as TSCP.
 		TSCP was the first chess engine I studied so as I develop my own
@@ -141,6 +139,7 @@ public:
 	// Evaluation value to be used in minimax algorithm.
 	int eval();
 
+	Hash hash;
 	Position pos;
 	std::vector<MoveInfo> pastMoves;
 

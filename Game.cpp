@@ -146,7 +146,7 @@ bool Game::makeMove(Move m)
 		takeBack();
 		return false;
 	}
-	setHash();
+	hash(pos);
 
 	return true;
 }
@@ -586,11 +586,6 @@ void Game::generatePawnPromotionMoves(uint8_t from, uint8_t to, int * promotionM
 		promotionMove.m = {16, from, to, i};
 		promotionMoves[j++] = promotionMove.x;
 	}
-}
-
-void Game::setHash()
-{
-	pos.hash = 0;
 }
 
 /*

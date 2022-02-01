@@ -127,7 +127,8 @@ struct Position
 	int fifty;
 
 	// Zobrist hash of the position
-	int hash;
+	// https://www.chessprogramming.org/Zobrist_Hashing
+	long hash;
 
 };
 
@@ -139,7 +140,7 @@ struct MoveInfo
 	uint8_t castleRights;
 	int ep;
 	int fifty;
-	int hash;
+	long hash;
 };
 
 
@@ -150,7 +151,5 @@ struct EngineConfig
 	// Searches the principle variation move first if we are still following the pv.
   bool pvSort;
 };
-
-
 
 #endif 
