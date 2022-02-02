@@ -16,10 +16,26 @@ void Engine::init(EngineConfig ec)
 {
     maxDepth = 20;
     config = ec;
+    if (config.useBook)
+        book.init(bookFile);
 }
 
 void Engine::think(int ms)
 {
+    if (config.useBook)
+    {
+        Move m;
+        if (book.getMove((*game).pos.hash, m))
+        {
+            pv[0][0] = m.x;
+            if (verbose)
+                (*os) << "Book move\n";
+            return;
+        }
+        else
+            config.useBook = false;
+    }
+
     int i, j, x;
     std::chrono::duration<int, std::milli> duration(ms);
     end = std::chrono::high_resolution_clock::now() + duration; 

@@ -38,6 +38,9 @@ runtest: $(BIN)/$(EXE)
 debug: $(DBG)/$(EXE)
 	gdb $(DBG)/$(EXE)
 
+book: book.txt book.py
+	python3 book.py
+
 clean:
 	rm $(BIN)/*.o $(DBG)/*.o
 

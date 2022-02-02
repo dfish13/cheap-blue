@@ -150,6 +150,9 @@ struct EngineConfig
 
 	// Searches the principle variation move first if we are still following the pv.
   bool pvSort;
+	
+	// Selects a random book move if there is one for the current position.
+	bool useBook;
 };
 
 #endif 

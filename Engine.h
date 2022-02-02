@@ -10,8 +10,11 @@
 #include "Defs.h"
 #include "Util.h"
 #include "Game.h"
+#include "Book.h"
 
 #define MAX_PLY		64
+
+const char bookFile[] = "book";
 
 struct TimeIsUp {};
 
@@ -19,10 +22,10 @@ class Engine
 {
 
 public:
-    Engine(Game * g, EngineConfig ec = {true});
+    Engine(Game * g, EngineConfig ec = {true, true});
     Engine(Game * g, std::ostream * o);
 
-    void init(EngineConfig ec  = {true});
+    void init(EngineConfig ec  = {true, true});
 
     void think(int ms);
     int search(int alpha, int beta, int depth);
@@ -51,6 +54,7 @@ private:
     int pv[MAX_PLY][MAX_PLY];
 
     EngineConfig config;
+    Book book;
 
 };
 
