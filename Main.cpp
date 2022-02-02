@@ -44,7 +44,7 @@ int main(int argc, char ** argv)
 			pvSort = stoi(argv[3]);
 			fen = argv[4];
 			game.init(fen);
-			Engine engine(&game, {static_cast<bool>(pvSort)});
+			Engine engine(&game, {static_cast<bool>(pvSort), true});
 			engine.think(thinkingTime * 1000);
 			move = engine.move();
 			cout << getMoveString(move);
