@@ -17,7 +17,7 @@ void Engine::init(EngineConfig ec)
     maxDepth = 20;
     config = ec;
     if (config.useBook)
-        book.init(bookFile);
+        book.init();
 }
 
 void Engine::think(int ms)

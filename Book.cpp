@@ -2,18 +2,18 @@
 
 Book::Book() {}
 
-void Book::init(const char bookFile[])
+void Book::init()
 {
-  std::ifstream fin(bookFile);
+  std::stringstream sin(book);
   std::string s;
   Game g;
   Move m;
   g.init();
 
   // Fill table with moves
-  while (fin)
+  while (sin)
   {
-    fin >> s;
+    sin >> s;
     if (s == "~")
       g.takeBack();
     else
@@ -23,7 +23,6 @@ void Book::init(const char bookFile[])
       g.makeMove(m);
     }
   }
-  fin.close();
 
   // seed pseudo-random number generator with current time.
   gen.seed(time(0));
