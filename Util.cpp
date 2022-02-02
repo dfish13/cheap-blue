@@ -305,6 +305,7 @@ void printPosition(std::ostream & os, const Position & p)
 		s.push_back('k'); 
 	
 	os << "castleRights = " << ((s.empty()) ? "-" : s) << '\n';
+	os << "hash = " << p.hash << '\n';
 }
 
 bool checkPosition(const Position & p, std::ostream & os)

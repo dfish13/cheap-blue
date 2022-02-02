@@ -110,17 +110,17 @@ struct Position
 	Piece squares[NSQUARES];
 	// Side has the move, xside is other.
 	Color side, xside;
-    // The value of the square that can be taken with enpassant.
+  // The value of the square that can be taken with enpassant.
 	uint8_t enpassant;
-    /*
-        This is for storing the right to castle, not necessarily the possibility in the board state.
-        ex. ) Pieces still in between may result in true, but castling cannot be done.
+	/*
+			This is for storing the right to castle, not necessarily the possibility in the board state.
+			ex. ) Pieces still in between may result in true, but castling cannot be done.
 
-	    castle & 8 != 0 => white can long castle(O-O-O)
-	    castle & 4 != 0 => white can short castle(O-O)
-	    castle & 2 != 0 => black can long castle(O-O-O)
-	    castle & 1 != 0 => black can short castle(O-O)
-    */
+		castle & 8 != 0 => white can long castle(O-O-O)
+		castle & 4 != 0 => white can short castle(O-O)
+		castle & 2 != 0 => black can long castle(O-O-O)
+		castle & 1 != 0 => black can short castle(O-O)
+	*/
 	uint8_t castleRights;
 
 	// Number of half moves made since the last irreversible move. 50 (100 half moves) in a row means the game is a draw.

@@ -3,6 +3,7 @@
 void Game::init()
 {
 	pos = defaultPosition();
+	hash(pos);
 	pastMoves.reserve(PASTMOVES_STACK);
 }
 
@@ -10,6 +11,7 @@ void Game::init(std::string fen)
 {
 	if (!getPositionFromFEN(pos, fen))
 		pos = defaultPosition();
+	hash(pos);
 	pastMoves.reserve(PASTMOVES_STACK);
 }
 
@@ -19,6 +21,7 @@ void Game::load(std::string fen)
 	if (getPositionFromFEN(p, fen))
 	{
 		pos = p;
+		hash(pos);
 		pastMoves.clear();
 	}
 }
@@ -36,15 +39,20 @@ Move Game::getMove(int m) const
 		move.x = x;
 
 		// if move is a castle then we need to check what side (long or short).
+		// This matches a castle when the user inputs the move with O notation.
 		if (move.m.mtype & 32)
 		{
 			if (imove.m.mtype & 32 && move.m.detail == imove.m.detail)
 				return move;
 		}
 
-		// if the from and to squares match up then we can infer this is the correct move
-		else if (imove.m.from == move.m.from && imove.m.to == move.m.to && imove.m.detail == move.m.detail)
-			return move; 
+		// if the from and to squares match up then we can infer this is the correct move.
+		if (imove.m.from == move.m.from && imove.m.to == move.m.to)
+		{
+			// For promotions we have to match the promotion piece.
+			if (!(move.m.mtype & 16) || (imove.m.detail == move.m.detail))
+				return move;
+		}
 	}
 
 	move.m = {128, 0, 0, 0};
