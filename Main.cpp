@@ -23,6 +23,7 @@ int main(int argc, char ** argv)
 	Move move;
 	int depth;
 	int thinkingTime;
+	int nmoves;
 	int pvSort;
 
 	// If there are any command line arguments
@@ -61,6 +62,20 @@ int main(int argc, char ** argv)
 				cout << "Depth must be > 0\n";
 			return 0;
 		}
+		else if (arg == "-e" && argc > 3)
+		{
+			thinkingTime = stoi(argv[2]);
+			nmoves = stoi(argv[3]);
+			fen = argv[4];
+			game.init(fen);
+			Engine engine(&game, {true, true});
+			engine.think(thinkingTime * 1000);
+			move = engine.move();
+
+			// TODO: needs to output engine evaluation for top n moves.
+			cout << getMoveString(move);
+			return 0;
+		}
 		else
 		{
 			cout << "Unrecognized command line argument\n";
@@ -69,6 +84,7 @@ int main(int argc, char ** argv)
 			cout << "\t-m <time> <pvsort> \"<fen>\": get engine move\n";
 			cout << "\t-p <depth> \"<fen>\": run perft test\n";
 			cout << "\t-f \"<fen>\": load game from FEN string\n\n";
+			cout << "\t-e <time> <nmoves> \"<fen>\": get engine move and evaluation\n";
 			return 0;
 		}
 	}
