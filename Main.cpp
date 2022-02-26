@@ -71,7 +71,7 @@ int main(int argc, char ** argv)
 			move = engine.move();
 			tt_entry e;
 			engine.tt.get(game.pos.hash, e);
-			cout << e.eval << ' ';
+			cout << (game.pos.side == white ? e.eval : -e.eval) << ' ';
 			cout << getMoveString(move);
 			return 0;
 		}
