@@ -23,7 +23,6 @@ int main(int argc, char ** argv)
 	Move move;
 	int depth;
 	int thinkingTime;
-	int nmoves;
 	int pvSort;
 
 	// If there are any command line arguments
@@ -65,14 +64,14 @@ int main(int argc, char ** argv)
 		else if (arg == "-e" && argc > 3)
 		{
 			thinkingTime = stoi(argv[2]);
-			nmoves = stoi(argv[3]);
-			fen = argv[4];
-			game.init(fen);
-			Engine engine(&game, {true, true});
+			fen = argv[3];
+			game.init(fen); // Always remember to call game.init()!!!!!
+			Engine engine(&game, {true, false}); // Book is turned off because we always want an evaluation.
 			engine.think(thinkingTime * 1000);
 			move = engine.move();
-
-			// TODO: needs to output engine evaluation for top n moves.
+			tt_entry e;
+			engine.tt.get(game.pos.hash, e);
+			cout << e.eval << ' ';
 			cout << getMoveString(move);
 			return 0;
 		}
@@ -84,7 +83,7 @@ int main(int argc, char ** argv)
 			cout << "\t-m <time> <pvsort> \"<fen>\": get engine move\n";
 			cout << "\t-p <depth> \"<fen>\": run perft test\n";
 			cout << "\t-f \"<fen>\": load game from FEN string\n\n";
-			cout << "\t-e <time> <nmoves> \"<fen>\": get engine move and evaluation\n";
+			cout << "\t-e <time> \"<fen>\": get evaluation and engine move\n";
 			return 0;
 		}
 	}
@@ -167,12 +166,13 @@ int main(int argc, char ** argv)
 
 void test()
 {
-	testEval();
-	testPerft();
-	testBoardIsAttacked();
-	testIntegration();
-	testFENParser();
-	testInCheck();
+	// testEval();
+	// testPerft();
+	// testBoardIsAttacked();
+	// testIntegration();
+	// testFENParser();
+	// testInCheck();
+	testTranspositionTable();
 }
 
 void perft(Game & game, int depth)

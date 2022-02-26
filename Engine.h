@@ -11,6 +11,7 @@
 #include "Util.h"
 #include "Game.h"
 #include "Book.h"
+#include "TT.h"
 
 #define MAX_PLY		64
 
@@ -38,6 +39,10 @@ public:
     void checkup();
 
     Move move();
+    int eval();
+
+    TT tt;
+    EngineConfig config;
 
 private:
     Game * game;
@@ -53,7 +58,6 @@ private:
 
     int pv[MAX_PLY][MAX_PLY];
 
-    EngineConfig config;
     Book book;
 
 };

@@ -580,7 +580,6 @@ std::vector<int> Game::genLegalMoves()
 			takeBack();
 		}	
 	}
-
 	return legalmoves;
 }
 
@@ -641,7 +640,6 @@ long Game::Perft(int depth)
 		}
 	}
 	return nodes;
-
 }
 
 double Game::Evaluation()

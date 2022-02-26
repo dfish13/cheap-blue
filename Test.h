@@ -15,5 +15,6 @@ void testBoardIsAttacked();
 void testIntegration();
 void testFENParser();
 void testInCheck();
+void testTranspositionTable();
 
 #endif

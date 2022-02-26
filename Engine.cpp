@@ -39,6 +39,7 @@ void Engine::think(int ms)
     int i, j, x;
     std::chrono::duration<int, std::milli> duration(ms);
     end = std::chrono::high_resolution_clock::now() + duration; 
+    tt_entry e;
 
     ply = 0;
     nodes = 0;
@@ -51,6 +52,12 @@ void Engine::think(int ms)
         {
             followPV = config.pvSort;
             x = search(-10000, 10000, i);
+
+            // Update transposition table
+            e.eval = x;
+            e.depth = i;
+            tt.put(game->pos.hash, e);
+
             if (verbose)
             {
                 (*os) << std::setw(3) << i;

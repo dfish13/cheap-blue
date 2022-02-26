@@ -9,6 +9,7 @@
 #include "Game.h"
 #include "Test.h"
 #include "Eval.h"
+#include "Engine.h"
 
 
 void testEval()
@@ -175,4 +176,10 @@ void testInCheck()
         std::cout << "testInCheck() passed :)\n";
     else
         std::cout << "testInCheck() failed :(\n";
+}
+
+void testTranspositionTable()
+{
+    // TODO
+    return;
 }
