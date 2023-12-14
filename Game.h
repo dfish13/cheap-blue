@@ -2,6 +2,7 @@
 #define GAME_H 
 
 #include <vector>
+#include <map>
 #include <ostream>
 #include <cstdlib>
 
@@ -139,9 +140,15 @@ public:
 	// Evaluation value to be used in minimax algorithm.
 	int eval();
 
+	bool hasThreefoldRepetition();
+
 	Hash hash;
 	Position pos;
 	std::vector<MoveInfo> pastMoves;
+
+	// Key is the hash, value is the number of times a position with that hash has been reached.
+	// Used for determining if the position has been repeated.
+	std::map<long, int> pastHashes;
 
 private:
 

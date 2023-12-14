@@ -166,12 +166,13 @@ int main(int argc, char ** argv)
 
 void test()
 {
-	// testEval();
+	testEval();
 	// testPerft();
-	// testBoardIsAttacked();
-	// testIntegration();
-	// testFENParser();
-	// testInCheck();
+	testBoardIsAttacked();
+	testIntegration();
+	testFENParser();
+	testInCheck();
+	testThreeMoveRepetition();
 	testTranspositionTable();
 }
 

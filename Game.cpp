@@ -4,6 +4,7 @@ void Game::init()
 {
 	pos = defaultPosition();
 	hash(pos);
+	pastHashes.emplace(pos.hash, 1);
 	pastMoves.reserve(PASTMOVES_STACK);
 }
 
@@ -12,6 +13,7 @@ void Game::init(std::string fen)
 	if (!getPositionFromFEN(pos, fen))
 		pos = defaultPosition();
 	hash(pos);
+	pastHashes.emplace(pos.hash, 1);
 	pastMoves.reserve(PASTMOVES_STACK);
 }
 
@@ -22,6 +24,8 @@ void Game::load(std::string fen)
 	{
 		pos = p;
 		hash(pos);
+		pastHashes.clear();
+		pastHashes.emplace(pos.hash, 1);
 		pastMoves.clear();
 	}
 }
@@ -156,6 +160,16 @@ bool Game::makeMove(Move m)
 	}
 	hash(pos);
 
+	// Update hash counts
+	auto h = pastHashes.find(pos.hash);
+	if (h == pastHashes.end()) {
+		pastHashes.emplace(pos.hash, 1);
+	}
+	else {
+		(h->second)++;
+	}
+	
+
 	return true;
 }
 
@@ -168,6 +182,19 @@ bool Game::takeBack()
 
 	std::swap(pos.side, pos.xside);
 	pastMoves.pop_back();
+
+	// Update hash counts
+	auto h = pastHashes.find(pos.hash);
+	if (h != pastHashes.end()) {
+		if (h->second == 1) {
+			pastHashes.erase(h);
+		}
+		else {
+			(h->second)--;
+		}
+	}
+	
+
 	m = mInfo.m;
 	pos.castleRights = mInfo.castleRights;
 	pos.enpassant = mInfo.ep;
@@ -653,4 +680,12 @@ double Game::Evaluation()
 int Game::eval()
 {
 	return Eval::eval(pos);
+}
+
+bool Game::hasThreefoldRepetition()
+{
+	for (auto h: pastHashes) {
+		if (h.second >= 3) return true;
+	}
+	return false;
 }

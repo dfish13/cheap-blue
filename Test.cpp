@@ -178,6 +178,46 @@ void testInCheck()
         std::cout << "testInCheck() failed :(\n";
 }
 
+void testThreeMoveRepetition()
+{
+    Move m;
+    Game game;
+    game.init();
+
+    bool flag = true;
+
+    // Repeat the starting position 3 times then allow black to capture a free horse.
+    std::vector<std::string> moveStringList = 
+    {"g1f3", "b8c6", "f3g1", "c6b8",
+     "g1f3", "b8c6", "f3g1", "c6b8",
+     "g1f3", "b8c6", "f3e5", "c6e5"};
+
+    for (std::string s: moveStringList)
+    {
+        m.x = parseMove(s);
+        game.makeMove(m);
+    }
+
+    if (!game.hasThreefoldRepetition())
+        flag = false;
+
+    game.load("1kr5/1b3R2/4p3/4Pn1p/R7/2P3p1/1KP2B1r/8 w - - 0 1");
+
+    Engine engine(&game, &std::cout);
+
+    engine.think(5000);
+    Move engineMove = engine.move();
+    m.x = parseMove("f2a7");
+
+    if (engineMove.x != m.x)
+        flag = false;
+
+    if (flag)
+        std::cout << "testThreeMoveRepetition() passed :)\n";
+    else
+        std::cout << "testThreeMoveRepetition() failed :(\n";
+}
+
 void testTranspositionTable()
 {
     // TODO

@@ -85,6 +85,13 @@ int Engine::search(int alpha, int beta, int depth)
     
     int i, j, x;
 	bool c, f;
+
+    if (game->pos.fifty >= 100) // 50 move draw
+        return 0;
+
+    if (game->hasThreefoldRepetition())
+        return 0;   
+
     if (depth == 0)
 		return quiesce(alpha, beta);
 	++nodes;
@@ -140,8 +147,6 @@ int Engine::search(int alpha, int beta, int depth)
             return 0; // Stalemate
     }
 
-    if (game->pos.fifty >= 100) // 50 move draw
-        return 0;
     return alpha;
 }
 
