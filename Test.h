@@ -18,4 +18,15 @@ void testInCheck();
 void testThreeMoveRepetition();
 void testTranspositionTable();
 
+// New unit tests
+void testMoveGeneration();
+void testMoveValidation();
+void testGameStateManagement();
+void testHashingConsistency();
+void testPieceValueCalculation();
+void testCastlingRights();
+void testEnPassant();
+void testPositionSetup();
+void testTTPerformance();
+
 #endif

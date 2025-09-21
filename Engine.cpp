@@ -18,6 +18,9 @@ void Engine::init(EngineConfig ec)
     config = ec;
     if (config.useBook)
         book.init();
+
+    // Initialize transposition table with 64MB
+    tt.init(64);
 }
 
 void Engine::think(int ms)
@@ -54,9 +57,7 @@ void Engine::think(int ms)
             x = search(-10000, 10000, i);
 
             // Update transposition table
-            e.eval = x;
-            e.depth = i;
-            tt.put(game->pos.hash, e);
+            tt.store(game->pos.hash, x, TT_EXACT, i, pv[0][0]);
 
             if (verbose)
             {

@@ -70,8 +70,11 @@ int main(int argc, char ** argv)
 			engine.think(thinkingTime * 1000);
 			move = engine.move();
 			tt_entry e;
-			engine.tt.get(game.pos.hash, e);
-			cout << (game.pos.side == white ? e.eval : -e.eval) << ' ';
+			if (engine.tt.probe(game.pos.hash, e)) {
+				cout << (game.pos.side == white ? e.eval : -e.eval) << ' ';
+			} else {
+				cout << "0 ";  // No evaluation found in TT
+			}
 			cout << getMoveString(move);
 			return 0;
 		}
@@ -174,6 +177,17 @@ void test()
 	testInCheck();
 	testThreeMoveRepetition();
 	testTranspositionTable();
+
+	// New unit tests
+	testMoveGeneration();
+	testMoveValidation();
+	testGameStateManagement();
+	testHashingConsistency();
+	testPieceValueCalculation();
+	testCastlingRights();
+	testEnPassant();
+	testPositionSetup();
+	testTTPerformance();
 }
 
 void perft(Game & game, int depth)
