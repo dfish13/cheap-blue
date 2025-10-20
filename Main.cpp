@@ -44,8 +44,8 @@ int main(int argc, char ** argv)
 			pvSort = stoi(argv[3]);
 			fen = argv[4];
 			game.init(fen);
-			Engine engine(&game, {static_cast<bool>(pvSort), true});
-			engine.think(thinkingTime * 1000);
+			Engine engine({static_cast<bool>(pvSort), true});
+			engine.think(game, thinkingTime * 1000);
 			move = engine.move();
 			cout << getMoveString(move);
 			return 0;
@@ -66,8 +66,8 @@ int main(int argc, char ** argv)
 			thinkingTime = stoi(argv[2]);
 			fen = argv[3];
 			game.init(fen); // Always remember to call game.init()!!!!!
-			Engine engine(&game, {true, false}); // Book is turned off because we always want an evaluation.
-			engine.think(thinkingTime * 1000);
+			Engine engine({true, false}); // Book is turned off because we always want an evaluation.
+			engine.think(game, thinkingTime * 1000);
 			move = engine.move();
 			tt_entry e;
 			if (engine.tt.probe(game.pos.hash, e)) {
@@ -97,7 +97,7 @@ int main(int argc, char ** argv)
 	else
 		game.init(fen);
 
-	Engine engine(&game, &cout);
+	Engine engine(&cout);
 
 	cout << "Type m to print menu\n";
 	while (1)
@@ -146,7 +146,7 @@ int main(int argc, char ** argv)
 		}
 		else if (s == "c")
 		{
-			engine.think(5000);
+			engine.think(game, 5000);
 			move = engine.move();
 			cout << getMoveString(move) << '\n';
 		}

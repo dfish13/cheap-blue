@@ -24,16 +24,14 @@ class Engine
 {
 
 public:
-    Engine(Game * g, EngineConfig ec = {true, true});
-    Engine(Game * g, std::ostream * o);
-    Engine(Game * g, EngineConfig ec, std::atomic<bool> * stop);
-
-    Engine(const Engine& engine);
-    ~Engine();
+    Engine(EngineConfig ec = {true, true});
+    Engine(std::ostream * o);
+    Engine(EngineConfig ec, std::atomic<bool> * stop);
 
     void init(EngineConfig ec  = {true, true});
+    void updateGame(Game g);
 
-    void think(int ms);
+    void think(Game g, int ms);
     int search(int alpha, int beta, int depth);
     int quiesce(int alpha, int beta);
 
@@ -45,13 +43,12 @@ public:
     void checkup();
 
     Move move();
-    int eval();
 
     TT tt;
     EngineConfig config;
 
 private:
-    Game * game;
+    Game game;
 
     int pvLength[MAX_PLY];
     bool followPV;

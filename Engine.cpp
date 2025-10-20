@@ -2,30 +2,19 @@
 
 bool globalFlag;
 
-Engine::Engine(Game * g, EngineConfig ec) : game(g), verbose(false), stop(nullptr)
+Engine::Engine(EngineConfig ec) : verbose(false), stop(nullptr)
 {
     init(ec);
 }
 
-Engine::Engine(Game * g, std::ostream * o) : game(g), os(o), verbose(true), stop(nullptr)
+Engine::Engine(std::ostream * o) : os(o), verbose(true), stop(nullptr)
 {
     init();
 }
 
-Engine::Engine(Game * g, EngineConfig ec, std::atomic<bool> * stop) : game(g), verbose(false), stop(stop)
+Engine::Engine(EngineConfig ec, std::atomic<bool> * stop) : verbose(false), stop(stop)
 {
     init(ec);
-}
-
-Engine::Engine(const Engine& engine)
-{
-    this->game = new Game(*(engine.game));
-    init(engine.config);
-}
-
-Engine::~Engine()
-{
-    delete game;
 }
 
 void Engine::init(EngineConfig ec)
@@ -39,12 +28,20 @@ void Engine::init(EngineConfig ec)
     tt.init(64);
 }
 
-void Engine::think(int ms)
+void Engine::updateGame(Game g)
 {
+    this->game = g;
+}
+
+void Engine::think(Game g, int ms)
+{
+    // Force a game update to ensure we aren't relying on some outdated game state.
+    updateGame(g);
+
     if (config.useBook)
     {
         Move m;
-        if (book.getMove((*game).pos.hash, m))
+        if (book.getMove(game.pos.hash, m))
         {
             pv[0][0] = m.x;
             if (verbose)
@@ -73,7 +70,7 @@ void Engine::think(int ms)
             x = search(-10000, 10000, i);
 
             // Update transposition table
-            tt.store(game->pos.hash, x, TT_EXACT, i, pv[0][0]);
+            tt.store(game.pos.hash, x, TT_EXACT, i, pv[0][0]);
 
             if (verbose)
             {
@@ -93,7 +90,7 @@ void Engine::think(int ms)
         if (verbose)
             (*os) << "Time is up!\n";
         while (ply--)
-            game->takeBack();
+            game.takeBack();
     }
 }
 
@@ -103,10 +100,10 @@ int Engine::search(int alpha, int beta, int depth)
     int i, j, x;
 	bool c, f;
 
-    if (game->pos.fifty >= 100) // 50 move draw
+    if (game.pos.fifty >= 100) // 50 move draw
         return 0;
 
-    if (game->hasThreefoldRepetition())
+    if (game.hasThreefoldRepetition())
         return 0;   
 
     if (depth == 0)
@@ -119,14 +116,14 @@ int Engine::search(int alpha, int beta, int depth)
     pvLength[ply] = ply;
 
     if (ply >= MAX_PLY - 1)
-        return game->eval();
+        return game.eval();
 
-    c = game->inCheck(game->pos.side);
+    c = game.inCheck(game.pos.side);
 	if (c)
 		++depth;
     std::vector<int> moves;
     moves.reserve(50);
-    game->genMoves(moves);
+    game.genMoves(moves);
 
     if (followPV)
         sortPV(moves);
@@ -135,13 +132,13 @@ int Engine::search(int alpha, int beta, int depth)
     f = false;
     for (int m : moves)
     {
-        if (!game->makeMove(m))
+        if (!game.makeMove(m))
             continue;
 
         f = true;
         ++ply;
         x = -search(-beta, -alpha, depth - 1);
-        game->takeBack();
+        game.takeBack();
         --ply;
 
         if (x > alpha) // Cutoff
@@ -178,9 +175,9 @@ int Engine::quiesce(int alpha, int beta)
     pvLength[ply] = ply;
 
     if (ply >= MAX_PLY - 1)
-		return game->eval();
+		return game.eval();
 
-    x = game->eval();
+    x = game.eval();
 	if (x >= beta)
 		return beta;
 	if (x > alpha)
@@ -188,7 +185,7 @@ int Engine::quiesce(int alpha, int beta)
 
     std::vector<int> moves;
     moves.reserve(25);
-    game->genCaptures(moves);
+    game.genCaptures(moves);
 
     if (followPV)
         sortPV(moves);
@@ -196,11 +193,11 @@ int Engine::quiesce(int alpha, int beta)
     sort(moves);
     for (int m: moves)
     {
-        if (!game->makeMove(m))
+        if (!game.makeMove(m))
             continue;
         ++ply;
         x = -quiesce(-beta, -alpha);
-        game->takeBack();
+        game.takeBack();
         --ply;
 
         if (x > alpha) // Cutoff
@@ -233,7 +230,7 @@ void Engine::sortPV(std::vector<int> & moves)
 void Engine::score(std::vector<int> & moves, int * scores)
 {
     Move m;
-    Piece * p = (game->pos.squares) ;
+    Piece * p = (game.pos.squares) ;
     for (int i = 0; i < moves.size(); ++i)
     {
         m.x = moves[i];

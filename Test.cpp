@@ -203,9 +203,9 @@ void testThreeMoveRepetition()
 
     game.load("1kr5/1b3R2/4p3/4Pn1p/R7/2P3p1/1KP2B1r/8 w - - 0 1");
 
-    Engine engine(&game, &std::cout);
+    Engine engine(&std::cout);
 
-    engine.think(5000);
+    engine.think(game, 5000);
     Move engineMove = engine.move();
     m.x = parseMove("f2a7");
 

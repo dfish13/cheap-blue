@@ -34,7 +34,7 @@ int parseMove(std::string m)
 {
 	Move move;
 
-	uint8_t mtype = 0, from, to, detail;
+	uint8_t mtype = 0, from = 0, to = 0, detail = 0;
 	int promotion = 0;
 	char promoteChars[5] = "qrbn";
 	if (m == "O-O")
@@ -90,10 +90,10 @@ std::string getMoveString(Move m)
 
 	std::string s = indexToSquare(m.m.from) + indexToSquare(m.m.to);
 
-	return getMoveStringRaw(m);
+	return getMoveStringRaw(m, false);
 }
 
-std::string getMoveStringRaw(Move m)
+std::string getMoveStringRaw(Move m, bool uci)
 {
 	std::string s = indexToSquare(m.m.from) + indexToSquare(m.m.to);
 
@@ -102,7 +102,8 @@ std::string getMoveStringRaw(Move m)
 	
 	if (m.m.mtype & 16)
 	{
-		s.push_back('=');
+		if (!uci)
+			s.push_back('=');
 		if (m.m.detail & 8)
 			s.push_back('q');
 		else if (m.m.detail & 4)

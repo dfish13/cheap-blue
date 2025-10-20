@@ -15,7 +15,7 @@ using namespace std;
 void uci_loop();
 void handle_position(istringstream &iss, Game &game);
 void handle_go(istringstream &iss, Engine &engine, Game &game);
-void go(Engine engine, atomic<bool> * stop);
+void go(Game g, atomic<bool> * stop);
 
 atomic<bool> stop = false;
 
@@ -33,7 +33,7 @@ void uci_loop()
     string line, token;
     Game game;
     game.init();
-    Engine engine(&game, {true, true}, &stop);
+    Engine engine({true, true}, &stop);
 
     while (getline(cin, line))
     {
@@ -142,7 +142,7 @@ void handle_go(istringstream &iss, Engine &engine, Game &game)
         else if (token == "depth")
             iss >> depth;
         else if (token == "infinite") {
-            std::thread t(go, engine, &stop);
+            std::thread t(go, game, &stop);
             t.detach();
             return;
         }
@@ -169,7 +169,7 @@ void handle_go(istringstream &iss, Engine &engine, Game &game)
         search_time = max(search_time, 100); // At least 100ms
     }
 
-    engine.think(search_time);
+    engine.think(game, search_time);
     Move best_move = engine.move();
 
     if (best_move.m.mtype & 128)
@@ -178,14 +178,14 @@ void handle_go(istringstream &iss, Engine &engine, Game &game)
     }
     else
     {
-        cout << "bestmove " << getMoveStringRaw(best_move) << endl;
+        cout << "bestmove " << getMoveStringRaw(best_move, true) << endl;
     }
 }
 
-void go(Engine engine, atomic<bool> * stop)
+void go(Game game, atomic<bool> * stop)
 {
-    engine.addStop(stop);
-    engine.think(INT32_MAX);
+    Engine engine({true, true}, stop);
+    engine.think(game, INT32_MAX);
     Move best_move = engine.move();
 
     if (best_move.m.mtype & 128)
@@ -194,6 +194,6 @@ void go(Engine engine, atomic<bool> * stop)
     }
     else
     {
-        cout << "bestmove " << getMoveStringRaw(best_move) << endl;
+        cout << "bestmove " << getMoveStringRaw(best_move, true) << endl;
     }
 }

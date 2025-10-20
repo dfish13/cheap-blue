@@ -9,11 +9,10 @@
 
 int parseSquare(std::string s);
 int parseMove(std::string m);
-int parseFEN(std::string f);
 
 std::string indexToSquare(int i);
 std::string getMoveString(Move m);
-std::string getMoveStringRaw(Move m);
+std::string getMoveStringRaw(Move m, bool uci);
 
 // Returns a Piece object given a character in the set "PNBRQKpnbrqk"
 char getCharacterFromPiece(Piece p);
