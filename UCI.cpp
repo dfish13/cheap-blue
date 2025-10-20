@@ -1,5 +1,6 @@
 #include <iostream>
 #include <sstream>
+#include <fstream>
 #include <string>
 #include "Game.h"
 #include "Engine.h"
@@ -19,6 +20,9 @@ int main(int argc, char **argv)
 
 void uci_loop()
 {
+    // Log incoming UCI messages.
+    std::ofstream fout("uci_log.b");
+
     string line, token;
     Game game;
     game.init();
@@ -26,6 +30,7 @@ void uci_loop()
 
     while (getline(cin, line))
     {
+        fout << line << '\n';
         istringstream iss(line);
         iss >> token;
 
@@ -161,6 +166,6 @@ void handle_go(istringstream &iss, Engine &engine, Game &game)
     }
     else
     {
-        cout << "bestmove " << getMoveString(best_move) << endl;
+        cout << "bestmove " << getMoveStringRaw(best_move) << endl;
     }
 }

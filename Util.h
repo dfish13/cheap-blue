@@ -13,6 +13,7 @@ int parseFEN(std::string f);
 
 std::string indexToSquare(int i);
 std::string getMoveString(Move m);
+std::string getMoveStringRaw(Move m);
 
 // Returns a Piece object given a character in the set "PNBRQKpnbrqk"
 char getCharacterFromPiece(Piece p);

@@ -4,6 +4,7 @@ void Game::init()
 {
 	pos = defaultPosition();
 	hash(pos);
+	pastHashes.clear();
 	pastHashes.emplace(pos.hash, 1);
 	pastMoves.reserve(PASTMOVES_STACK);
 }
@@ -13,6 +14,7 @@ void Game::init(std::string fen)
 	if (!getPositionFromFEN(pos, fen))
 		pos = defaultPosition();
 	hash(pos);
+	pastHashes.clear();
 	pastHashes.emplace(pos.hash, 1);
 	pastMoves.reserve(PASTMOVES_STACK);
 }

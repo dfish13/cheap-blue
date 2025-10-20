@@ -90,6 +90,13 @@ std::string getMoveString(Move m)
 
 	std::string s = indexToSquare(m.m.from) + indexToSquare(m.m.to);
 
+	return getMoveStringRaw(m);
+}
+
+std::string getMoveStringRaw(Move m)
+{
+	std::string s = indexToSquare(m.m.from) + indexToSquare(m.m.to);
+
 	if (m.m.mtype & 128)
 		return "None";
 	

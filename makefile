@@ -1,22 +1,25 @@
 
 CC=g++
-FLAGS=-std=c++14
+FLAGS=-std=c++23
 EXE=main
+UCI=uci
 
 DBG=debug
 BIN=bin
 
-APPDIR=../
-
 SRC=$(wildcard *.cpp)
 HDRS=$(wildcard *.h)
-OBJ=$(patsubst %.cpp, $(BIN)/%.o, $(SRC))
+OBJ=$(patsubst %.cpp, $(BIN)/%.o, $(filter-out UCI.cpp, $(SRC)))
+UCIOBJ=$(patsubst %.cpp, $(BIN)/%.o, $(filter-out Main.cpp, $(SRC)))
 DBGOBJ=$(patsubst %.cpp, $(DBG)/%.o, $(SRC))
 
-all: $(EXE)
+all: $(EXE) $(UCI)
 	
 $(EXE): $(OBJ) $(HDRS)
 	$(CC) -o $(BIN)/$@ $(OBJ) $(FLAGS)
+
+$(UCI): $(UCIOBJ) $(HDRS)
+	$(CC) -o $(BIN)/$@ $(UCIOBJ) $(FLAGS)
 
 $(BIN)/%.o: %.cpp
 	@mkdir -p $(BIN)

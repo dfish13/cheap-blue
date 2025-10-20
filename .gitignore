@@ -1,3 +1,5 @@
 .vscode/
 bin/
 debug/
+
+uci_log.b
