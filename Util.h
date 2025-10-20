@@ -8,7 +8,7 @@
 #include <list>
 
 int parseSquare(std::string s);
-int parseMove(std::string m);
+int parseMove(std::string m, bool uci = false);
 
 std::string indexToSquare(int i);
 std::string getMoveString(Move m);

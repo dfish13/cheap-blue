@@ -30,7 +30,7 @@ int parseSquare(std::string s)
 	For promotion add =<Piece> where <Piece> is in {q, r, b, n}
 	e.g. h7h8=q or e7xf8=n
 */
-int parseMove(std::string m)
+int parseMove(std::string m, bool uci)
 {
 	Move move;
 
@@ -45,14 +45,33 @@ int parseMove(std::string m)
 	{
 		from = parseSquare(m.substr(0, 2));
 		to = parseSquare(m.substr(2, 2));
-		if (m.size() == 6)
+
+		if (uci)
 		{
-			for (int i = 0; i < 4; ++i)
-				if (m[5] == promoteChars[i])
-				{
-					promotion = 1 << (3 - i);
-					break;
-				}
+			// uci moves do not include an '=' sign.
+			// so a promotion might look like this e7e8q
+			// instead of e7e8=q
+			if (m.size() == 5)
+			{
+				for (int i = 0; i < 4; ++i)
+					if (m[4] == promoteChars[i])
+					{
+						promotion = 1 << (3 - i);
+						break;
+					}
+			}
+		}
+		else
+		{
+			if (m.size() == 6)
+			{
+				for (int i = 0; i < 4; ++i)
+					if (m[5] == promoteChars[i])
+					{
+						promotion = 1 << (3 - i);
+						break;
+					}
+			}
 		}
 
 		if (promotion){

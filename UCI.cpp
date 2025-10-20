@@ -107,7 +107,7 @@ void handle_position(istringstream &iss, Game &game)
 
         do {
             Move move;
-            move.x = parseMove(token);
+            move.x = parseMove(token, true);
             if (!(move.m.mtype & 128))
             {
                 move = game.getMove(move.x);
