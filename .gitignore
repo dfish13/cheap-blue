@@ -3,5 +3,6 @@ bin/
 debug/
 
 uci_log.b
-versions/
+versions/*
+!versions/*.meta
 *.json

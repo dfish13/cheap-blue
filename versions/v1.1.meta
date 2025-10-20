@@ -1,0 +1,5 @@
+version: v1.1
+description: baseline (w/ archiving commit, no functional changes)
+timestamp: 2025-10-20 17:18:20
+git_commit: 2e7c603
+binary_size: 425440
