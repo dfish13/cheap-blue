@@ -2,6 +2,10 @@
 #include <sstream>
 #include <fstream>
 #include <string>
+#include <atomic>
+#include <climits>
+#include <thread>
+
 #include "Game.h"
 #include "Engine.h"
 #include "Util.h"
@@ -11,6 +15,9 @@ using namespace std;
 void uci_loop();
 void handle_position(istringstream &iss, Game &game);
 void handle_go(istringstream &iss, Engine &engine, Game &game);
+void go(Engine engine, atomic<bool> * stop);
+
+atomic<bool> stop = false;
 
 int main(int argc, char **argv)
 {
@@ -26,7 +33,7 @@ void uci_loop()
     string line, token;
     Game game;
     game.init();
-    Engine engine(&game, {true, true}); // Disable book for UCI
+    Engine engine(&game, {true, true}, &stop);
 
     while (getline(cin, line))
     {
@@ -55,6 +62,10 @@ void uci_loop()
         else if (token == "go")
         {
             handle_go(iss, engine, game);
+        }
+        else if (token == "stop")
+        {
+            stop = true;
         }
         else if (token == "quit")
         {
@@ -112,7 +123,7 @@ void handle_go(istringstream &iss, Engine &engine, Game &game)
     int wtime = 0, btime = 0, winc = 0, binc = 0, movestogo = 0;
     int movetime = 0, depth = 0;
 
-    bool infinite = false;
+    stop = false;
 
     while (iss >> token)
     {
@@ -131,7 +142,8 @@ void handle_go(istringstream &iss, Engine &engine, Game &game)
         else if (token == "depth")
             iss >> depth;
         else if (token == "infinite") {
-            // Don't start infinite search. Requires interrupting engine search which is tricky.
+            std::thread t(go, engine, &stop);
+            t.detach();
             return;
         }
     }
@@ -158,6 +170,22 @@ void handle_go(istringstream &iss, Engine &engine, Game &game)
     }
 
     engine.think(search_time);
+    Move best_move = engine.move();
+
+    if (best_move.m.mtype & 128)
+    {
+        cout << "bestmove (none)" << endl;
+    }
+    else
+    {
+        cout << "bestmove " << getMoveStringRaw(best_move) << endl;
+    }
+}
+
+void go(Engine engine, atomic<bool> * stop)
+{
+    engine.addStop(stop);
+    engine.think(INT32_MAX);
     Move best_move = engine.move();
 
     if (best_move.m.mtype & 128)

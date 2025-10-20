@@ -2,14 +2,30 @@
 
 bool globalFlag;
 
-Engine::Engine(Game * g, EngineConfig ec) : game(g), verbose(false)
+Engine::Engine(Game * g, EngineConfig ec) : game(g), verbose(false), stop(nullptr)
 {
     init(ec);
 }
 
-Engine::Engine(Game * g, std::ostream * o) : game(g), os(o), verbose(true)
+Engine::Engine(Game * g, std::ostream * o) : game(g), os(o), verbose(true), stop(nullptr)
 {
     init();
+}
+
+Engine::Engine(Game * g, EngineConfig ec, std::atomic<bool> * stop) : game(g), verbose(false), stop(stop)
+{
+    init(ec);
+}
+
+Engine::Engine(const Engine& engine)
+{
+    this->game = new Game(*(engine.game));
+    init(engine.config);
+}
+
+Engine::~Engine()
+{
+    delete game;
 }
 
 void Engine::init(EngineConfig ec)
@@ -247,10 +263,17 @@ void Engine::sort(std::vector<int> & moves)
     delete [] scores;
 }
 
+void Engine::addStop(std::atomic<bool> * stop)
+{
+    this->stop = stop;
+}
+
 void Engine::checkup()
 {
     now = std::chrono::high_resolution_clock::now();
     if (now >= end)
+        throw TimeIsUp();
+    if (stop != nullptr && *stop)
         throw TimeIsUp();
 }
 
