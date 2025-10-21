@@ -44,7 +44,7 @@ int main(int argc, char ** argv)
 			pvSort = stoi(argv[3]);
 			fen = argv[4];
 			game.init(fen);
-			Engine engine({static_cast<bool>(pvSort), true});
+			Engine engine({static_cast<bool>(pvSort), true, 8});
 			engine.think(game, thinkingTime * 1000);
 			move = engine.move();
 			cout << getMoveString(move);
@@ -66,7 +66,7 @@ int main(int argc, char ** argv)
 			thinkingTime = stoi(argv[2]);
 			fen = argv[3];
 			game.init(fen); // Always remember to call game.init()!!!!!
-			Engine engine({true, false}); // Book is turned off because we always want an evaluation.
+			Engine engine({true, false, 8}); // Book is turned off because we always want an evaluation.
 			engine.think(game, thinkingTime * 1000);
 			move = engine.move();
 			tt_entry e;

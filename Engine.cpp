@@ -24,8 +24,8 @@ void Engine::init(EngineConfig ec)
     if (config.useBook)
         book.init();
 
-    // Initialize transposition table with 64MB
-    tt.init(64);
+    // Initialize transposition table.
+    tt.init(ec.tt_size);
 }
 
 void Engine::updateGame(Game g)

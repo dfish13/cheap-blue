@@ -33,7 +33,7 @@ void uci_loop()
     string line, token;
     Game game;
     game.init();
-    Engine engine({false, true}, &stop);
+    Engine engine({true, true, 8}, &stop);
 
     while (getline(cin, line))
     {
@@ -184,7 +184,7 @@ void handle_go(istringstream &iss, Engine &engine, Game &game)
 
 void go(Game game, atomic<bool> * stop)
 {
-    Engine engine({false, true}, stop);
+    Engine engine({true, true, 8}, stop);
     engine.think(game, INT32_MAX);
     Move best_move = engine.move();
 
