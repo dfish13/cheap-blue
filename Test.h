@@ -29,4 +29,7 @@ void testEnPassant();
 void testPositionSetup();
 void testTTPerformance();
 
+// Stress tests
+void testStress();
+
 #endif

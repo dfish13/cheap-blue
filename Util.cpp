@@ -289,6 +289,68 @@ bool getPositionFromFEN(Position & pos, std::string fen)
 	return true;
 }
 
+bool getPositionFromEPD(Position & pos, std::string epd)
+{
+	Piece p;
+	size_t i, toplefti = 0;
+
+	for (i = 0; i < NSQUARES; ++i)
+		pos.squares[i] = {none, any};
+
+	for (i = 0; i < epd.size() && epd[i] != ' '; ++i)
+	{
+		if (isdigit(epd[i]))
+			toplefti += (epd[i] - '0');
+		else if (epd[i] == '/')
+			continue;
+		else
+		{
+			pos.squares[TOPLEFTTOBOTTOMLEFT(toplefti)] = getPieceFromCharacter(epd[i]);
+			++toplefti;
+		}
+	}
+
+	if (epd[++i] == 'w')
+		pos.side = white;
+	else if (epd[i] == 'b')
+		pos.side = black;
+	else
+		return false;
+	pos.xside = (pos.side == white) ? black : white;
+	pos.castleRights = 0;
+
+	for (i += 2; i < epd.size() && epd[i] != ' '; ++i)
+	{
+		switch (epd[i])
+		{
+			case 'Q':
+				pos.castleRights |= 8; break;
+			case 'K':
+				pos.castleRights |= 4; break;
+			case 'q':
+				pos.castleRights |= 2; break;
+			case 'k':
+				pos.castleRights |= 1; break;
+			default:
+				break;
+		}
+	}
+
+	if (epd[++i] != '-')
+	{
+		pos.enpassant = parseSquare(epd.substr(i, 2));
+		if (pos.enpassant < 0)
+			return false;
+	}
+	else
+		pos.enpassant = NSQUARES;
+
+	// EPD does not include move counters, so set fifty to 0
+	pos.fifty = 0;
+
+	return true;
+}
+
 void printBoard(std::ostream & os, const Position & p)
 {
 	int i;

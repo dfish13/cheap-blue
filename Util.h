@@ -21,7 +21,8 @@ Piece getPieceFromCharacter(char c);
 
 // Two ways to initialize a Position object
 Position defaultPosition();
-bool getPositionFromFEN(Position & pos, std::string fen);    // Returns -1 if invalid FEN string
+bool getPositionFromFEN(Position & pos, std::string fen);    // Returns false if invalid FEN string
+bool getPositionFromEPD(Position & pos, std::string epd);    // Returns false if invalid EPD string
 
 void printBoard(std::ostream & os, const Position & p);
 

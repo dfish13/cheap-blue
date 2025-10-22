@@ -512,3 +512,15 @@ void testTTPerformance()
 
     engine.tt.print_stats();
 }
+
+void testStress()
+{
+    Engine engine({true, true, 2});
+
+    Game game; 
+    game.init("r1bqk1r1/1p1p1n2/p1n2pN1/2p1b2Q/2P1Pp2/1PN5/PB4PP/R4RK1 w q - - bm Rxf4; id \"ERET 001 - Relief\";");
+
+    engine.think(game, 10000);
+
+    engine.tt.print_stats();
+}

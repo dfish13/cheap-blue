@@ -2,7 +2,7 @@
 #include <iostream>
 #include <iomanip>
 
-TT::TT() : table(nullptr), locks(nullptr), table_size(0), mask(0),
+TT::TT() : table(nullptr), table_size(0), mask(0),
            probes(0), hits(0), collisions(0) {
 }
 
@@ -14,7 +14,7 @@ TT::~TT() {
 
 void TT::init(size_t mb_size) {
     // Calculate number of entries for the given MB size
-    size_t entries = (mb_size * 1024 * 1024) / sizeof(tt_entry);
+    size_t entries = (mb_size * 1024 * 1024) / sizeof(tt_row);
 
     // Round down to nearest power of 2
     table_size = 1;
@@ -28,21 +28,10 @@ void TT::init(size_t mb_size) {
     if (table) {
         delete[] table;
     }
-    if (locks) {
-        delete[] locks;
-    }
-    table = new tt_entry[table_size];
-    locks = new std::mutex[table_size];
-    clear();
+    table = new tt_row[table_size];
 
     // Reset statistics
     probes = hits = collisions = 0;
-}
-
-void TT::clear() {
-    if (table) {
-        std::memset(table, 0, table_size * sizeof(tt_entry));
-    }
 }
 
 void TT::store(uint64_t hash, int eval, TTFlag flag, int depth, int best_move) {
@@ -50,8 +39,8 @@ void TT::store(uint64_t hash, int eval, TTFlag flag, int depth, int best_move) {
 
     size_t index = hash_index(hash);
     {
-        std::scoped_lock lock(locks[index]);
-        tt_entry* entry = &table[index];
+        std::scoped_lock lock(table[index].m);
+        tt_entry* entry = &table[index].e;
 
         // Replacement scheme: replace if:
         // 1. Entry is empty (key == 0)
@@ -77,8 +66,8 @@ bool TT::probe(uint64_t hash, tt_entry& entry) {
     probes++;
     size_t index = hash_index(hash);
     {
-        std::scoped_lock lock(locks[index]);
-        tt_entry* stored = &table[index];
+        std::scoped_lock lock(table[index].m);
+        tt_entry* stored = &table[index].e;
 
         if (stored->key == hash) {
             entry = *stored;
@@ -100,7 +89,7 @@ double TT::load_factor() const {
 
     size_t used_entries = 0;
     for (size_t i = 0; i < table_size; i++) {
-        if (table[i].key != 0) {
+        if (table[i].e.key != 0) {
             used_entries++;
         }
     }
@@ -111,7 +100,7 @@ double TT::load_factor() const {
 void TT::print_stats() const {
     std::cout << "=== Transposition Table Statistics ===\n";
     std::cout << "Size: " << table_size << " entries\n";
-    std::cout << "Memory: " << (table_size * sizeof(tt_entry)) / (1024 * 1024) << " MB\n";
+    std::cout << "Memory: " << (table_size * sizeof(tt_row)) / (1024 * 1024) << " MB\n";
     std::cout << "Load factor: " << std::fixed << std::setprecision(2) << load_factor() * 100 << "%\n";
     std::cout << "Probes: " << probes << "\n";
     std::cout << "Hits: " << hits << "\n";

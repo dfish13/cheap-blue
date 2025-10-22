@@ -188,6 +188,9 @@ void test()
 	testEnPassant();
 	testPositionSetup();
 	testTTPerformance();
+
+	// Stress test
+	testStress();
 }
 
 void perft(Game & game, int depth)

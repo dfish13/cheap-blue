@@ -81,10 +81,10 @@ public:
 	Game() {};
 
 	void init();
-	void init(std::string fen);
+	void init(std::string fenOrEpd);
 
-	// Similar to init(fen) but you can use it on a game that has already been initialized.
-	void load(std::string fen);
+	// Similar to init(fenOrEpd) but you can use it on a game that has already been initialized.
+	void load(std::string fenOrEpd);
 
 	bool makeMove(Move m);
 

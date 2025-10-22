@@ -9,9 +9,9 @@ void Game::init()
 	pastMoves.reserve(PASTMOVES_STACK);
 }
 
-void Game::init(std::string fen)
+void Game::init(std::string fenOrEpd)
 {
-	if (!getPositionFromFEN(pos, fen))
+	if (!getPositionFromFEN(pos, fenOrEpd) && !getPositionFromEPD(pos, fenOrEpd))
 		pos = defaultPosition();
 	hash(pos);
 	pastHashes.clear();
@@ -19,10 +19,10 @@ void Game::init(std::string fen)
 	pastMoves.reserve(PASTMOVES_STACK);
 }
 
-void Game::load(std::string fen)
+void Game::load(std::string fenOrEpd)
 {
 	Position p;
-	if (getPositionFromFEN(p, fen))
+	if (getPositionFromFEN(p, fenOrEpd) || getPositionFromEPD(p, fenOrEpd))
 	{
 		pos = p;
 		hash(pos);

@@ -1,6 +1,5 @@
 #include <iostream>
 #include <sstream>
-#include <fstream>
 #include <string>
 #include <atomic>
 #include <climits>
@@ -27,8 +26,6 @@ int main(int argc, char **argv)
 
 void uci_loop()
 {
-    // Log incoming UCI messages.
-    std::ofstream fout("uci_log.b");
 
     string line, token;
     Game game;
@@ -37,7 +34,6 @@ void uci_loop()
 
     while (getline(cin, line))
     {
-        fout << line << '\n';
         istringstream iss(line);
         iss >> token;
 

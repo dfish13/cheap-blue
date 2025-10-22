@@ -20,6 +20,18 @@ struct tt_entry
     uint8_t depth;       // Search depth
     uint8_t flag;        // Bound type (TTFlag)
     uint8_t padding;     // Align to 16 bytes
+
+    tt_entry() {
+        // TODO: consider an object implementation where we can do a memset on a contiguous array of tt_entry.
+        // Currently, the tt_entry and mutex are interleaved, which prevents us from doing a single memset on the whole table.
+        std::memset(this, 0, sizeof(tt_entry));
+    }
+};
+
+struct tt_row
+{
+    tt_entry e;
+    std::mutex m;        // Acquire lock before reading or writing to entry. TODO enforce this with object oriented approach.
 };
 
 /**
@@ -33,7 +45,6 @@ public:
     ~TT();
 
     void init(size_t mb_size = 64);  // Initialize with size in MB
-    void clear();                    // Clear all entries
 
     void store(uint64_t hash, int eval, TTFlag flag, int depth, int best_move);
     bool probe(uint64_t hash, tt_entry& entry);
@@ -44,8 +55,7 @@ public:
     void print_stats() const;
 
 private:
-    tt_entry* table;
-    std::mutex * locks;
+    tt_row* table;
 
     size_t table_size;      // Number of entries (power of 2)
     size_t mask;            // table_size - 1 for fast modulo
