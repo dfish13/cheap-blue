@@ -1,18 +1,38 @@
 #!/bin/bash
 # Archive a version of the UCI binary for comparison testing
-# Usage: ./archive_version.sh <version_name> [description]
+# Usage: ./archive_version.sh [-f] <version_name> [description]
 
 set -e
 
-VERSION_NAME="$1"
-DESCRIPTION="${2:-No description provided}"
+FORCE_OVERWRITE=false
 ARCHIVE_DIR="versions"
 BINARY="bin/uci"
 
+# Parse flags
+while getopts "f" opt; do
+    case $opt in
+        f)
+            FORCE_OVERWRITE=true
+            ;;
+        \?)
+            echo "Invalid option: -$OPTARG" >&2
+            exit 1
+            ;;
+    esac
+done
+shift $((OPTIND-1))
+
+VERSION_NAME="$1"
+DESCRIPTION="${2:-No description provided}"
+
 if [ -z "$VERSION_NAME" ]; then
-    echo "Usage: ./archive_version.sh <version_name> [description]"
+    echo "Usage: ./archive_version.sh [-f] <version_name> [description]"
+    echo ""
+    echo "Options:"
+    echo "  -f    Force overwrite if version already exists"
     echo ""
     echo "Example: ./archive_version.sh v1.0 'Initial alpha-beta implementation'"
+    echo "         ./archive_version.sh -f v1.0 'Updated alpha-beta implementation'"
     exit 1
 fi
 
@@ -34,9 +54,13 @@ fi
 
 # Check if version already exists
 if [ -f "$ARCHIVE_DIR/$VERSION_NAME" ]; then
-    echo "Error: Version '$VERSION_NAME' already exists"
-    echo "Use a different version name or delete the existing version"
-    exit 1
+    if [ "$FORCE_OVERWRITE" = false ]; then
+        echo "Error: Version '$VERSION_NAME' already exists"
+        echo "Use a different version name, delete the existing version, or use -f to force overwrite"
+        exit 1
+    else
+        echo "Warning: Overwriting existing version '$VERSION_NAME'"
+    fi
 fi
 
 # Get git commit hash if in a git repository

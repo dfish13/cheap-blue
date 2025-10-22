@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <cstring>
+#include <mutex>
 
 // Bound types for transposition table entries
 enum TTFlag {
@@ -18,7 +19,6 @@ struct tt_entry
     int16_t best_move;   // Best move found (encoded as int)
     uint8_t depth;       // Search depth
     uint8_t flag;        // Bound type (TTFlag)
-    uint8_t age;         // Age for replacement scheme
     uint8_t padding;     // Align to 16 bytes
 };
 
@@ -34,7 +34,6 @@ public:
 
     void init(size_t mb_size = 64);  // Initialize with size in MB
     void clear();                    // Clear all entries
-    void age();                      // Increment age counter
 
     void store(uint64_t hash, int eval, TTFlag flag, int depth, int best_move);
     bool probe(uint64_t hash, tt_entry& entry);
@@ -46,9 +45,10 @@ public:
 
 private:
     tt_entry* table;
+    std::mutex * locks;
+
     size_t table_size;      // Number of entries (power of 2)
     size_t mask;            // table_size - 1 for fast modulo
-    uint8_t current_age;    // Current search age
 
     // Statistics
     mutable uint64_t probes;

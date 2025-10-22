@@ -1,5 +1,5 @@
 
-CC=g++
+CC=clang++
 FLAGS=-std=c++23
 EXE=main
 UCI=uci
@@ -11,7 +11,7 @@ SRC=$(wildcard *.cpp)
 HDRS=$(wildcard *.h)
 OBJ=$(patsubst %.cpp, $(BIN)/%.o, $(filter-out UCI.cpp, $(SRC)))
 UCIOBJ=$(patsubst %.cpp, $(BIN)/%.o, $(filter-out Main.cpp, $(SRC)))
-DBGOBJ=$(patsubst %.cpp, $(DBG)/%.o, $(SRC))
+DBGOBJ=$(patsubst %.cpp, $(DBG)/%.o, $(filter-out Main.cpp, $(SRC)))
 
 all: $(EXE) $(UCI)
 	
@@ -29,7 +29,7 @@ $(DBG)/%.o: %.cpp
 	@mkdir -p $(DBG)
 	$(CC) $(FLAGS) -g -o $@ -c $^
 
-$(DBG)/$(EXE): $(DBGOBJ) $(HDRS)
+$(DBG)/$(UCI): $(DBGOBJ) $(HDRS)
 	$(CC) $(FLAGS) -g -o $@ $(DBGOBJ)
 
 run: $(BIN)/$(EXE)

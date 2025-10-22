@@ -2,7 +2,7 @@
 #include <iostream>
 #include <iomanip>
 
-TT::TT() : table(nullptr), table_size(0), mask(0), current_age(0),
+TT::TT() : table(nullptr), locks(nullptr), table_size(0), mask(0),
            probes(0), hits(0), collisions(0) {
 }
 
@@ -28,12 +28,15 @@ void TT::init(size_t mb_size) {
     if (table) {
         delete[] table;
     }
+    if (locks) {
+        delete[] locks;
+    }
     table = new tt_entry[table_size];
+    locks = new std::mutex[table_size];
     clear();
 
     // Reset statistics
     probes = hits = collisions = 0;
-    current_age = 0;
 }
 
 void TT::clear() {
@@ -42,37 +45,29 @@ void TT::clear() {
     }
 }
 
-void TT::age() {
-    current_age++;
-    // Wrap around to prevent overflow
-    if (current_age == 0) {
-        current_age = 1;
-    }
-}
-
 void TT::store(uint64_t hash, int eval, TTFlag flag, int depth, int best_move) {
     if (!table) return;
 
     size_t index = hash_index(hash);
-    tt_entry* entry = &table[index];
+    {
+        std::scoped_lock lock(locks[index]);
+        tt_entry* entry = &table[index];
 
-    // Replacement scheme: replace if:
-    // 1. Entry is empty (key == 0)
-    // 2. Same position (key matches)
-    // 3. Higher depth search
-    // 4. Much older entry (different age and lower depth)
-    bool should_replace = (entry->key == 0) ||
-                         (entry->key == hash) ||
-                         (depth >= entry->depth) ||
-                         (entry->age != current_age && depth >= entry->depth - 2);
+        // Replacement scheme: replace if:
+        // 1. Entry is empty (key == 0)
+        // 2. Same position (key matches)
+        // 3. Higher depth search
+        bool should_replace = (entry->key == 0) ||
+                            (entry->key == hash) ||
+                            (depth >= entry->depth);
 
-    if (should_replace) {
-        entry->key = hash;
-        entry->eval = static_cast<int16_t>(eval);
-        entry->best_move = static_cast<int16_t>(best_move);
-        entry->depth = static_cast<uint8_t>(depth);
-        entry->flag = static_cast<uint8_t>(flag);
-        entry->age = current_age;
+        if (should_replace) {
+            entry->key = hash;
+            entry->eval = static_cast<int16_t>(eval);
+            entry->best_move = static_cast<int16_t>(best_move);
+            entry->depth = static_cast<uint8_t>(depth);
+            entry->flag = static_cast<uint8_t>(flag);
+        }
     }
 }
 
@@ -81,17 +76,21 @@ bool TT::probe(uint64_t hash, tt_entry& entry) {
 
     probes++;
     size_t index = hash_index(hash);
-    tt_entry* stored = &table[index];
+    {
+        std::scoped_lock lock(locks[index]);
+        tt_entry* stored = &table[index];
 
-    if (stored->key == hash) {
-        entry = *stored;
-        hits++;
-        return true;
-    }
+        if (stored->key == hash) {
+            entry = *stored;
+            hits++;
+            return true;
+        }
 
-    if (stored->key != 0) {
-        collisions++;
+        if (stored->key != 0) {
+            collisions++;
+        }
     }
+    
 
     return false;
 }

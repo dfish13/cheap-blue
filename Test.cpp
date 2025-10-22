@@ -501,32 +501,14 @@ void testPositionSetup()
 
 void testTTPerformance()
 {
-    TT tt;
-    tt.init(8);  // 8MB table
+    std::cout << "testTTPerformance()\n";
 
-    std::cout << "testTTPerformance() - Testing TT with many entries...\n";
+    Engine engine({true, true, 64});
 
     // Store many entries
-    const int num_entries = 10000;
-    for (int i = 0; i < num_entries; i++) {
-        uint64_t hash = static_cast<uint64_t>(i) * 1234567;
-        tt.store(hash, i % 1000, TT_EXACT, (i % 10) + 1, i);
-    }
+    Game game;
+    game.init("r4rk1/4q1pp/pb1pbp2/1p2p3/3pPP2/PP1P2NP/1P1B2P1/2RQ1R1K b - - 0 21");
+    engine.think(game, 5000);
 
-    // Retrieve some entries
-    int found_count = 0;
-    for (int i = 0; i < num_entries; i += 100) {
-        uint64_t hash = static_cast<uint64_t>(i) * 1234567;
-        tt_entry entry;
-        if (tt.probe(hash, entry)) {
-            found_count++;
-        }
-    }
-
-    // Print TT statistics
-    tt.print_stats();
-
-    bool passed = found_count > 0;  // Should find at least some entries
-    std::cout << "Found " << found_count << " entries out of " << (num_entries / 100) << " probes\n";
-    std::cout << "testTTPerformance() " << (passed ? "passed!" : "failed :(") << "\n";
+    engine.tt.print_stats();
 }

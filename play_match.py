@@ -9,6 +9,7 @@ import sys
 import subprocess
 import json
 import os
+import asyncio
 from datetime import datetime
 from pathlib import Path
 
@@ -50,7 +51,7 @@ class MatchRunner:
             return chess.STARTING_FEN
         return self.openings[game_num % len(self.openings)]
 
-    def play_game(self, white_engine_path, black_engine_path, game_num):
+    async def play_game(self, white_engine_path, black_engine_path, game_num):
         """Play a single game between two engines"""
         board = chess.Board(self._get_opening(game_num))
 
@@ -61,17 +62,17 @@ class MatchRunner:
         engines = {}
         try:
             # Start engines
-            engines['white'] = chess.engine.SimpleEngine.popen_uci(white_engine_path)
-            engines['black'] = chess.engine.SimpleEngine.popen_uci(black_engine_path)
+            engines['white'] = await chess.engine.popen_uci(white_engine_path)
+            engines['black'] = await chess.engine.popen_uci(black_engine_path)
 
             move_count = 0
             max_moves = 200  # Draw by move limit
 
             while not board.is_game_over() and move_count < max_moves:
-                current_engine = engines['white'] if board.turn == chess.WHITE else engines['black']
+                transport, current_engine = engines['white'] if board.turn == chess.WHITE else engines['black']
 
                 # Get move from engine
-                result = current_engine.play(
+                result = await current_engine.play(
                     board,
                     chess.engine.Limit(time=self.time_per_move / 1000.0)
                 )
@@ -104,7 +105,7 @@ class MatchRunner:
             # Clean up engines
             for engine in engines.values():
                 try:
-                    engine.quit()
+                    await engine.quit()
                 except:
                     pass
 
@@ -135,7 +136,7 @@ class MatchRunner:
                 white_is_engine1 = False
 
             try:
-                result, moves = self.play_game(white_engine, black_engine, game_num)
+                result, moves = asyncio.run(self.play_game(white_engine, black_engine, game_num))
 
                 # Record result from engine1's perspective
                 if result == 'draw':

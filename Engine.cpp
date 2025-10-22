@@ -69,9 +69,6 @@ void Engine::think(Game g, int ms)
             followPV = config.pvSort;
             x = search(-10000, 10000, i);
 
-            // Update transposition table
-            tt.store(game.pos.hash, x, TT_EXACT, i, pv[0][0]);
-
             if (verbose)
             {
                 (*os) << std::setw(3) << i;
@@ -96,9 +93,12 @@ void Engine::think(Game g, int ms)
 
 int Engine::search(int alpha, int beta, int depth)
 {
-    
     int i, j, x;
 	bool c, f;
+    tt_entry e;
+
+    if (tt.probe(game.pos.hash, e) && e.depth >= depth && e.flag == TT_EXACT)
+        return e.eval;
 
     if (game.pos.fifty >= 100) // 50 move draw
         return 0;
@@ -108,8 +108,8 @@ int Engine::search(int alpha, int beta, int depth)
 
     if (depth == 0)
 		return quiesce(alpha, beta);
-	++nodes;
     
+    ++nodes;
     if ((nodes & 1023) == 0)
         checkup();
 
@@ -160,7 +160,8 @@ int Engine::search(int alpha, int beta, int depth)
         else
             return 0; // Stalemate
     }
-
+    
+    tt.store(game.pos.hash, alpha, TT_EXACT, depth, pv[0][0]);
     return alpha;
 }
 

@@ -24,7 +24,7 @@ class Engine
 {
 
 public:
-    Engine(EngineConfig ec = {true /* pvSort on */, true /* book on */, 8 /* 8mb TT */});
+    Engine(EngineConfig ec = {true /* pvSort on */, true /* book on */, 64 /* 64mb TT */});
     Engine(std::ostream * o);
     Engine(EngineConfig ec, std::atomic<bool> * stop);
 
