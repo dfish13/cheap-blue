@@ -66,6 +66,7 @@ private:
     std::atomic<bool>* stop;
 
     int pv[MAX_PLY][MAX_PLY];
+    int killerMoves[MAX_PLY][2];
 
     Book book;
 

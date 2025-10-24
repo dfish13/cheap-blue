@@ -26,6 +26,9 @@ void Engine::init(EngineConfig ec)
 
     // Initialize transposition table.
     tt.init(ec.tt_size);
+
+    // Initialize killer moves.
+    memset(killerMoves, 0, sizeof(killerMoves));
 }
 
 void Engine::updateGame(Game g)
@@ -66,6 +69,7 @@ void Engine::think(Game g, int ms)
     ply = 0;
     nodes = 0;
     memset(pv, 0, sizeof(pv));
+    memset(killerMoves, 0, sizeof(killerMoves));
     try
     {
         if (verbose)
@@ -171,10 +175,22 @@ int Engine::search(int alpha, int beta, int depth)
             best_move = m;
             if (x >= beta)
             {
+                // Store killer moves (only for quiet moves, not captures).
+                Move move;
+                move.x = m;
+                if (!(move.m.mtype & 64)) // Not a capture
+                {
+                    // Shift killers: new killer goes to slot 0, old slot 0 goes to slot 1
+                    if (killerMoves[ply][0] != m)
+                    {
+                        killerMoves[ply][1] = killerMoves[ply][0];
+                        killerMoves[ply][0] = m;
+                    }
+                }
                 tt.store(game.pos.hash, beta, TT_BETA, depth, best_move);
                 return beta;
             }
-                
+
             alpha = x;
             pv[ply][ply] = m;
             for (j = ply + 1; j < pvLength[ply + 1]; ++j)
@@ -278,6 +294,10 @@ void Engine::score(std::vector<int> & moves, int * scores)
         }
         else if (m.m.mtype & 64) // Capture
             scores[i] = 1000000 + p[m.m.to].ptype * 10 - p[m.m.from].ptype;
+        else if (moves[i] == killerMoves[ply][0]) // First killer move
+            scores[i] = 900000;
+        else if (moves[i] == killerMoves[ply][1]) // Second killer move
+            scores[i] = 800000;
         else
             scores[i] = 0;
 
