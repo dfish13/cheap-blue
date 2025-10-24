@@ -109,30 +109,41 @@ int Engine::search(int alpha, int beta, int depth)
     // alpha gets updated as the score improves so we store the original alpha value.
     int alpha_old = alpha;
     tt_entry e;
+    
 
     if (tt.probe(game.pos.hash, e) && e.depth >= depth)
     {
         if (e.flag == TT_EXACT)
         {
-            // Need to update pv table on exact TT hits.
-            // TT_EXACT means alpha < score < beta which is the condition for which we update the pv in normal search.
-            pv[ply][ply] = e.best_move;
-            for (j = ply + 1; j < pvLength[ply + 1]; ++j)
-				pv[ply][j] = pv[ply + 1][j];
-			pvLength[ply] = pvLength[ply + 1];
-            return e.eval;
+            bool has_three_fold = false;
+            if (depth == 1)
+            {
+                game.makeMove(e.best_move);
+                bool has_three_fold = game.hasThreefoldRepetition();
+                game.takeBack();
+            }
+            if (!has_three_fold)
+            {
+                // Need to update pv table on exact TT hits.
+                // TT_EXACT means alpha < score < beta which is the condition for which we update the pv in normal search.
+                pv[ply][ply] = e.best_move;
+                for (j = ply + 1; j < pvLength[ply + 1]; ++j)
+                    pv[ply][j] = pv[ply + 1][j];
+                pvLength[ply] = pvLength[ply + 1];
+                return e.eval;
+            }
         }
         if (e.flag == TT_ALPHA && e.eval <= alpha)
             return alpha;
         if (e.flag == TT_BETA && e.eval >= beta)
             return beta;
     } 
-
+    
     if (game.pos.fifty >= 100) // 50 move draw
         return 0;
 
     if (game.hasThreefoldRepetition())
-        return 0;   
+        return 0;
 
     if (depth == 0)
 		return quiesce(alpha, beta);
@@ -337,12 +348,6 @@ void Engine::checkup()
 Move Engine::move()
 {
     Move m;
-    // tt_entry e;
-    // if (tt.probe(game.pos.hash, e))
-    // {
-    //     m.x = (int) e.best_move;
-    //     return m;
-    // }
     if (pv[0][0])
         return pv[0][0];
     m.m = {128, 0, 0, 0};
