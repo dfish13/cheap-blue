@@ -10,6 +10,7 @@
 #define ROOK_SEMI_OPEN_FILE_BONUS	10
 #define ROOK_OPEN_FILE_BONUS		15
 #define ROOK_ON_SEVENTH_BONUS		20
+#define BISHOP_PAIR_BONUS			50
 
 namespace Eval {
 

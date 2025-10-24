@@ -90,6 +90,7 @@ int pawn_rank[2][10];
 
 int piece_mat[2];  /* the value of a side's pieces */
 int pawn_mat[2];  /* the value of a side's pawns */
+int bishop_count[2];  /* the number of bishops each side has */
 
 Position pos;
 
@@ -112,6 +113,8 @@ int eval(Position p)
 	piece_mat[black] = 0;
 	pawn_mat[white] = 0;
 	pawn_mat[black] = 0;
+	bishop_count[white] = 0;
+	bishop_count[black] = 0;
 	for (i = 0; i < 64; ++i) {
 		if (pos.squares[i].color == none)
 			continue;
@@ -127,13 +130,23 @@ int eval(Position p)
 					pawn_rank[black][f] = ROW(i);
 			}
 		}
-		else
+		else {
 			piece_mat[pos.squares[i].color] += piece_value[pos.squares[i].ptype];
+			if (pos.squares[i].ptype == bishop)
+				bishop_count[pos.squares[i].color]++;
+		}
 	}
 
 	/* this is the second pass: evaluate each piece */
 	score[white] = piece_mat[white] + pawn_mat[white];
 	score[black] = piece_mat[black] + pawn_mat[black];
+
+	/* add bishop pair bonus */
+	if (bishop_count[white] >= 2)
+		score[white] += BISHOP_PAIR_BONUS;
+	if (bishop_count[black] >= 2)
+		score[black] += BISHOP_PAIR_BONUS;
+
 	for (i = 0; i < 64; ++i) {
 		if (pos.squares[i].color == none)
 			continue;
