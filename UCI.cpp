@@ -32,7 +32,7 @@ int main(int argc, char **argv)
     return 0;
 }
 
-void uci_loop()
+void open_log_file()
 {
     // Example of the very popular RFC 3339 format UTC time
     std::time_t time = std::time({});
@@ -42,6 +42,10 @@ void uci_loop()
     string filename = "uci-";
     string timeS(timeString);
     fout.open(filename + timeS + ".log");
+}
+
+void uci_loop()
+{
     string line, token;
     Game game;
     game.init();
@@ -49,8 +53,6 @@ void uci_loop()
 
     while (getline(cin, line))
     {
-        if(debug)
-            fout << line << '\n';
         istringstream iss(line);
         iss >> token;
 

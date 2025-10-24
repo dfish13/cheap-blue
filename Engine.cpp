@@ -109,7 +109,15 @@ int Engine::search(int alpha, int beta, int depth)
     if (tt.probe(game.pos.hash, e) && e.depth >= depth)
     {
         if (e.flag == TT_EXACT)
+        {
+            // Need to update pv table on exact TT hits.
+            // TT_EXACT means alpha < score < beta which is the condition for which we update the pv in normal search.
+            pv[ply][ply] = e.best_move;
+            for (j = ply + 1; j < pvLength[ply + 1]; ++j)
+				pv[ply][j] = pv[ply + 1][j];
+			pvLength[ply] = pvLength[ply + 1];
             return e.eval;
+        }
         if (e.flag == TT_ALPHA && e.eval <= alpha)
             return alpha;
         if (e.flag == TT_BETA && e.eval >= beta)
@@ -261,9 +269,14 @@ void Engine::score(std::vector<int> & moves, int * scores)
     for (int i = 0; i < moves.size(); ++i)
     {
         m.x = moves[i];
-        if (m.m.mtype & 16)
-            scores[i] = 1000000 + ((int) m.m.detail) * 10;
-        else if (p[m.m.to].color != none)
+        if (m.m.mtype & 16) // Pawn promotion
+        {
+            if (m.m.mtype & 64) // Promotion and capture
+                scores[i] = 2000000 + ((int) m.m.detail) * 10;
+            else
+                scores[i] = 1000000 + ((int) m.m.detail) * 10;
+        }
+        else if (m.m.mtype & 64) // Capture
             scores[i] = 1000000 + p[m.m.to].ptype * 10 - p[m.m.from].ptype;
         else
             scores[i] = 0;
@@ -303,15 +316,15 @@ void Engine::checkup()
 
 Move Engine::move()
 {
-    tt_entry e;
     Move m;
+    // tt_entry e;
+    // if (tt.probe(game.pos.hash, e))
+    // {
+    //     m.x = (int) e.best_move;
+    //     return m;
+    // }
     if (pv[0][0])
         return pv[0][0];
-    if (tt.probe(game.pos.hash, e))
-    {
-        m.x = (int) e.best_move;
-        return m;
-    }
     m.m = {128, 0, 0, 0};
     return m;
 }
