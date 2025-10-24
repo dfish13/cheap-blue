@@ -1,9 +1,12 @@
 #include <iostream>
 #include <sstream>
+#include <fstream>
 #include <string>
 #include <atomic>
 #include <climits>
 #include <thread>
+#include <chrono>
+#include <format> // For std::format (C++20)
 
 #include "Game.h"
 #include "Engine.h"
@@ -17,16 +20,28 @@ void handle_go(istringstream &iss, Engine &engine, Game &game);
 void go(Game g, atomic<bool> * stop);
 
 atomic<bool> stop = false;
+atomic<bool> debug = false;
+ofstream fout;
 
 int main(int argc, char **argv)
 {
+    if (argc > 1 && std::strcmp(argv[1], "-f"))
+        debug = true;
+
     uci_loop();
     return 0;
 }
 
 void uci_loop()
 {
-
+    // Example of the very popular RFC 3339 format UTC time
+    std::time_t time = std::time({});
+    char timeString[std::size("hh-mm-ss")];
+    std::strftime(std::data(timeString), std::size(timeString),
+                  "%H-%M-%S", std::localtime(&time));
+    string filename = "uci-";
+    string timeS(timeString);
+    fout.open(filename + timeS + ".log");
     string line, token;
     Game game;
     game.init();
@@ -34,6 +49,8 @@ void uci_loop()
 
     while (getline(cin, line))
     {
+        if(debug)
+            fout << line << '\n';
         istringstream iss(line);
         iss >> token;
 
@@ -62,6 +79,12 @@ void uci_loop()
         else if (token == "stop")
         {
             stop = true;
+        }
+        else if (token == "debug")
+        {
+            debug = !debug;
+            if (debug)
+                engine.debug(&std::cout);
         }
         else if (token == "quit")
         {
@@ -163,6 +186,7 @@ void handle_go(istringstream &iss, Engine &engine, Game &game)
         // Safety margins
         search_time = min(search_time, time_left / 2);
         search_time = max(search_time, 100); // At least 100ms
+        fout << "search_time = " << search_time <<'\n';
     }
 
     engine.think(game, search_time);
@@ -181,6 +205,8 @@ void handle_go(istringstream &iss, Engine &engine, Game &game)
 void go(Game game, atomic<bool> * stop)
 {
     Engine engine({true, true, 8}, stop);
+    if (debug)
+        engine.debug(&std::cout);
     engine.think(game, INT32_MAX);
     Move best_move = engine.move();
 

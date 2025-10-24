@@ -53,7 +53,7 @@ void TT::store(uint64_t hash, int eval, TTFlag flag, int depth, int best_move) {
         if (should_replace) {
             entry->key = hash;
             entry->eval = static_cast<int16_t>(eval);
-            entry->best_move = static_cast<int16_t>(best_move);
+            entry->best_move = static_cast<int32_t>(best_move);
             entry->depth = static_cast<uint8_t>(depth);
             entry->flag = static_cast<uint8_t>(flag);
         }

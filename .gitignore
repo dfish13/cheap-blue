@@ -6,3 +6,4 @@ uci_log.b
 versions/*
 !versions/*.meta
 *.json
+*.log

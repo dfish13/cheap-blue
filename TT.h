@@ -16,7 +16,7 @@ struct tt_entry
 {
     uint64_t key;        // Full 64-bit hash key for collision detection
     int16_t eval;        // Evaluation score
-    int16_t best_move;   // Best move found (encoded as int)
+    int32_t best_move;   // Best move found (encoded as int)
     uint8_t depth;       // Search depth
     uint8_t flag;        // Bound type (TTFlag)
     uint8_t padding;     // Align to 16 bytes

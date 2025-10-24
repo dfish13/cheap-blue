@@ -30,6 +30,7 @@ public:
 
     void init(EngineConfig ec  = {true, true});
     void updateGame(Game g);
+    void debug(std::ostream * o);
 
     void think(Game g, int ms);
     int search(int alpha, int beta, int depth);

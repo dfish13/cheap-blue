@@ -33,6 +33,12 @@ void Engine::updateGame(Game g)
     this->game = g;
 }
 
+void Engine::debug(std::ostream * o)
+{
+    verbose = true;
+    os = o;
+}
+
 void Engine::think(Game g, int ms)
 {
     // Force a game update to ensure we aren't relying on some outdated game state.
@@ -95,10 +101,20 @@ int Engine::search(int alpha, int beta, int depth)
 {
     int i, j, x;
 	bool c, f;
+
+    // alpha gets updated as the score improves so we store the original alpha value.
+    int alpha_old = alpha;
     tt_entry e;
 
-    if (tt.probe(game.pos.hash, e) && e.depth >= depth && e.flag == TT_EXACT)
-        return e.eval;
+    if (tt.probe(game.pos.hash, e) && e.depth >= depth)
+    {
+        if (e.flag == TT_EXACT)
+            return e.eval;
+        if (e.flag == TT_ALPHA && e.eval <= alpha)
+            return alpha;
+        if (e.flag == TT_BETA && e.eval >= beta)
+            return beta;
+    } 
 
     if (game.pos.fifty >= 100) // 50 move draw
         return 0;
@@ -130,6 +146,7 @@ int Engine::search(int alpha, int beta, int depth)
 
     sort(moves);
     f = false;
+    int best_move = moves[0];
     for (int m : moves)
     {
         if (!game.makeMove(m))
@@ -142,9 +159,14 @@ int Engine::search(int alpha, int beta, int depth)
         --ply;
 
         if (x > alpha) // Cutoff
-        {       
+        {
+            best_move = m;
             if (x >= beta)
+            {
+                tt.store(game.pos.hash, beta, TT_BETA, depth, best_move);
                 return beta;
+            }
+                
             alpha = x;
             pv[ply][ply] = m;
             for (j = ply + 1; j < pvLength[ply + 1]; ++j)
@@ -160,8 +182,12 @@ int Engine::search(int alpha, int beta, int depth)
         else
             return 0; // Stalemate
     }
+
+    if (alpha == alpha_old)
+        tt.store(game.pos.hash, alpha, TT_ALPHA, depth, best_move);
+    else
+        tt.store(game.pos.hash, alpha, TT_EXACT, depth, best_move);
     
-    tt.store(game.pos.hash, alpha, TT_EXACT, depth, pv[0][0]);
     return alpha;
 }
 
@@ -277,9 +303,15 @@ void Engine::checkup()
 
 Move Engine::move()
 {
+    tt_entry e;
+    Move m;
     if (pv[0][0])
         return pv[0][0];
-    Move m;
+    if (tt.probe(game.pos.hash, e))
+    {
+        m.x = (int) e.best_move;
+        return m;
+    }
     m.m = {128, 0, 0, 0};
     return m;
 }

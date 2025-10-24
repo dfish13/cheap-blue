@@ -76,7 +76,7 @@ union Move
 	Move() {};
 	Move(int x) : x(x) {};
 	MoveBytes m;
-	int x;
+	uint32_t x;
 };
 
 struct Piece
